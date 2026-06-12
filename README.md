@@ -1,6 +1,6 @@
-# PredX — Decentralized Prediction & Trading Platform
+# ArthNiti — Decentralized Prediction & Trading Platform
 
-PredX is a DeFi platform on **Algorand TestNet** that combines:
+ArthNiti is a DeFi platform on **Algorand TestNet** that combines:
 - binary prediction markets,
 - simulated stock + crypto trading,
 - AI-assisted market analysis,
