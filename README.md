@@ -1,74 +1,102 @@
 # PredX — Decentralized Prediction & Trading Platform
 
-PredX is a comprehensive decentralized finance (DeFi) platform built on the **Algorand TestNet**. It combines binary prediction markets (betting), real-time stock and crypto trading (simulated), AI-driven market analysis using Google Gemini, and automated NFT minting via IPFS/Pinata.
+PredX is a DeFi platform on **Algorand TestNet** that combines:
+- binary prediction markets,
+- simulated stock + crypto trading,
+- AI-assisted market analysis,
+- NFT minting workflows.
 
-## 🚀 Key Features
+## 🧠 What the project does (at a glance)
 
--   **Prediction Markets**: Browse and place binary bets (YES/NO) on real-world events. Markets are powered by ARC-4 smart contracts and decentralized oracle scripts.
--   **Trading Terminal**: Execute high-speed trades with real-time charting for Indian stocks (NSE/BSE) and top cryptocurrencies, using ALGO as the base currency.
--   **AI Market Analyzer**: Integrated Google Gemini AI providing market sentiment, portfolio suggestions, and real-time risk alerts.
--   **NFT Minting (ARC-3)**: Automated NFT minting from images. Upload metadata to Pinata IPFS and record the creation on the Algorand blockchain.
--   **Live Support**: Instant platform help via the integrated ElevenLabs ConvAI voice assistant.
--   **Wallet Integration**: Full support for Pera Wallet with high-validity transaction signing (1000-round window).
+```mermaid
+flowchart LR
+    U[User + Pera Wallet] --> F[Frontend dApp]
+    F --> C[Algorand Smart Contract]
+    F --> D[Market Data APIs]
+    F --> A[Gemini AI Insights]
+    F --> P[Pinata IPFS]
+    C --> R[On-chain outcomes and settlements]
+    D --> R2[Live market context]
+```
 
----
+## 🚀 Core Capabilities
 
-## 📂 Repository Structure
+- **Prediction Markets**: Place YES/NO bets backed by ARC-4 smart contracts and oracle scripts.
+- **Trading Terminal**: Simulated trading for NSE/BSE stocks and crypto pairs.
+- **AI Analyzer**: Gemini-powered sentiment and portfolio guidance.
+- **NFT Minting (ARC-3)**: Media + metadata flow via Pinata/IPFS with Algorand recording.
+- **Wallet Integration**: Pera wallet transaction signing for TestNet interactions.
 
--   `/smart-contracts` — Python smart contract logic (`polymarket_oracle.py`), deployment scripts (`deploy.py`), and market resolve tools.
--   `/frontend` — Modern React 18 frontend with Vite, Tailwind CSS, and Algorand SDKs.
+## 🗺️ Repository Map
 
----
+- `/frontend` — React 18 + Vite app (UI, wallet integration, trading/prediction experience)
+- `/smart-contracts` — contract logic, deployment, and market resolution scripts
+- `/backend` — backend services and supporting integrations
 
-## 🛠️ Setup & Requirements
+## ⚡ Quick Setup (recommended path)
 
-### Prerequisites
+```mermaid
+flowchart TD
+    A[Install prerequisites] --> B[Deploy smart contract]
+    B --> C[Copy frontend .env]
+    C --> D[Run frontend]
+    D --> E[Connect Pera + test features]
+```
 
--   **Node.js** (v18+) & `npm`
--   **Python** (v3.10+) & `pip`
--   **Pera Wallet App** (TestNet account with some ALGO from the [faucet](https://bank.testnet.algorand.network/))
--   **Pinata JWT** (Optional, for NFT features)
--   **Gemini API Key** (Optional, for AI analysis features)
+### 1) Prerequisites
 
-### 1. Smart Contract Deployment
+- **Node.js** (v20+) and `npm`
+- **Python** (v3.10+) and `pip`
+- **Pera Wallet** with TestNet ALGO from faucet: https://bank.testnet.algorand.network/
+- (Optional) **Pinata JWT** for NFT flow
+- (Optional) **Gemini API key** for AI features
+
+### 2) Deploy smart contract
 
 ```bash
 cd smart-contracts
 pip install -r requirements.txt
-
-# Copy template and add your credentials
 cp .env.template .env
-
-# Deploy the contract
 python deploy.py
-# (Note the Application ID output to your console)
 ```
 
-### 2. Frontend Configuration
+Save the generated **Application ID**.
+
+### 3) Configure and run frontend
 
 ```bash
 cd frontend
 npm install
-
-# Copy template and add your App ID + API keys
 cp .env.template .env
-
-# Run development server
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+Open: `http://localhost:5173`
 
----
+## 🔍 Typical User Flow
 
-## 🏗️ Technical Architecture
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Frontend
+    participant Wallet as Pera Wallet
+    participant Chain as Algorand
+    User->>UI: Choose market/trade action
+    UI->>Wallet: Request signature
+    Wallet-->>UI: Signed transaction
+    UI->>Chain: Submit transaction
+    Chain-->>UI: Confirmation
+    UI-->>User: Updated portfolio/position
+```
 
--   **Algorand SDK**: `@algorandfoundation/algokit-utils` for contract management.
--   **IPFS**: [Pinata](https://pinata.cloud/) for decentralized storage of NFT media.
--   **AI Engine**: Google Gemini Pro (via REST API).
--   **Voice Assistant**: ElevenLabs ConvAI (integrated globally via root HTML).
--   **Real-time Data**: Yahoo Finance (stocks) and CoinGecko (oracle prices).
+## 🧱 Tech Stack
 
-## 📄 License & Terms
+- **Frontend**: React, Vite, Tailwind
+- **Blockchain**: Algorand SDK + ARC standards
+- **AI**: Google Gemini
+- **Storage**: Pinata/IPFS
+- **Data Sources**: market APIs for stocks and crypto
 
-This project is built for evaluation and hackathon purposes on the test network. All ALGO used has no real-world value.
+## 📄 Notes
+
+Built for hackathon/evaluation use on TestNet. Tokens and values are for demonstration.
