@@ -48,8 +48,8 @@ flowchart TD
 - **Node.js** (v20+) and `npm`
 - **Python** (v3.10+) and `pip`
 - **Pera Wallet** with TestNet ALGO from faucet: https://bank.testnet.algorand.network/
-- (Optional) **Pinata JWT** for NFT flow
-- (Optional) **Gemini API key** for AI features
+- **Pinata JWT** for NFT flow
+- **Gemini API key** for AI features
 
 ### 2) Deploy smart contract
 
