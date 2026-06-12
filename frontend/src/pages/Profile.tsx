@@ -93,44 +93,44 @@ export default function Profile() {
           <h3 className={sectionTitle}>Algorand Wallet</h3>
           {activeAddress ? (
             <div className="space-y-3">
-              <div className="flex justify-between text-sm py-2 border-b border-[#2A2F38]">
-                <span className="text-slate-500">Status</span>
+              <div className="flex justify-between text-sm py-2 border-b border-on-surface/10">
+                <span className="text-on-surface/40 font-body">Status</span>
                 <span className="font-medium text-[#22C55E] flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse inline-block" />
                   Connected
                 </span>
               </div>
-              <div className="flex justify-between text-sm py-2 border-b border-[#2A2F38]">
-                <span className="text-slate-500">Address</span>
-                <span className="font-mono text-slate-200 text-xs">{ellipseAddress(activeAddress, 8)}</span>
+              <div className="flex justify-between text-sm py-2 border-b border-on-surface/10">
+                <span className="text-on-surface/40 font-body">Address</span>
+                <span className="font-mono text-on-surface/80 text-xs">{ellipseAddress(activeAddress, 8)}</span>
               </div>
-              <div className="flex justify-between text-sm py-2 border-b border-[#2A2F38]">
-                <span className="text-slate-500">ALGO Balance</span>
-                <span className="font-medium text-slate-100">{balanceLoading ? '…' : `${algoBalance.toFixed(4)} ALGO`}</span>
+              <div className="flex justify-between text-sm py-2 border-b border-on-surface/10">
+                <span className="text-on-surface/40 font-body">ALGO Balance</span>
+                <span className="font-medium text-on-surface">{balanceLoading ? '…' : `${algoBalance.toFixed(4)} ALGO`}</span>
               </div>
-              <div className="flex justify-between text-sm py-2 border-b border-[#2A2F38]">
-                <span className="text-slate-500">INR Value</span>
+              <div className="flex justify-between text-sm py-2 border-b border-on-surface/10">
+                <span className="text-on-surface/40 font-body">INR Value</span>
                 <span className="font-medium text-[#2962FF]">{balanceLoading ? '…' : inr(inrBalance)}</span>
               </div>
-              <div className="flex justify-between text-sm py-2 border-b border-[#2A2F38]">
-                <span className="text-slate-500">Net Worth (est.)</span>
+              <div className="flex justify-between text-sm py-2 border-b border-on-surface/10">
+                <span className="text-on-surface/40 font-body">Net Worth (est.)</span>
                 <span className="font-medium text-[#00FFA3]">{inr(netWorthINR)}</span>
               </div>
-              <div className="flex justify-between text-sm py-2 border-b border-[#2A2F38]">
-                <span className="text-slate-500">Valuation Rate</span>
-                <span className="font-medium text-slate-100">1 ALGO = ₹{ALGO_TO_INR.toLocaleString()}</span>
+              <div className="flex justify-between text-sm py-2 border-b border-on-surface/10">
+                <span className="text-on-surface/40 font-body">Valuation Rate</span>
+                <span className="font-medium text-on-surface">1 ALGO = ₹{ALGO_TO_INR.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-sm py-2 border-b border-[#2A2F38]">
-                <span className="text-slate-500">Predictions</span>
-                <span className="font-medium text-slate-100">{myPositions.length} total</span>
+              <div className="flex justify-between text-sm py-2 border-b border-on-surface/10">
+                <span className="text-on-surface/40 font-body">Predictions</span>
+                <span className="font-medium text-on-surface">{myPositions.length} total</span>
               </div>
               <div className="flex justify-between text-sm py-2">
-                <span className="text-slate-500">Trades</span>
-                <span className="font-medium text-slate-100">{myTrades.length} total</span>
+                <span className="text-on-surface/40 font-body">Trades</span>
+                <span className="font-medium text-on-surface">{myTrades.length} total</span>
               </div>
 
               {wallets && wallets.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-[#2A2F38]">
+                <div className="mt-4 pt-4 border-t border-on-surface/10">
                   <button
                     onClick={() => wallets[0]?.disconnect()}
                     className="text-sm font-medium px-4 py-2 rounded-xl border border-[#EF4444]/30 hover:bg-[#EF4444]/10 text-[#EF4444]/80 hover:text-[#EF4444] transition-colors"
@@ -143,8 +143,8 @@ export default function Profile() {
           ) : (
             <div className="text-center py-4">
               <span className="material-symbols-outlined text-4xl text-slate-600">account_balance_wallet</span>
-              <p className="text-slate-400 mt-3 font-medium">No wallet connected</p>
-              <p className="text-sm text-slate-500 mt-1">Connect your Pera Wallet using the button in the top bar.</p>
+              <p className="text-on-surface/60 font-body mt-3 font-medium">No wallet connected</p>
+              <p className="text-sm text-on-surface/40 font-body mt-1">Connect your Pera Wallet using the button in the top bar.</p>
             </div>
           )}
         </div>
@@ -152,18 +152,18 @@ export default function Profile() {
         {/* Data Management */}
         <div className={cardCls}>
           <h3 className={sectionTitle}>Data Management</h3>
-          <p className="text-xs text-slate-500 mb-5">Export or import your goals, debts, and expense data stored locally.</p>
+          <p className="text-xs text-on-surface/40 font-body mb-5">Export or import your goals, debts, and expense data stored locally.</p>
 
           <div className="flex flex-wrap gap-3">
             <button
               onClick={handleExport}
-              className="text-sm font-medium px-4 py-2 rounded-xl border border-[#2A2F38] hover:bg-[#1F2630] text-slate-300 transition-colors"
+              className="text-sm font-medium px-4 py-2 rounded-xl border border-on-surface/10 hover:bg-[#1F2630] text-on-surface/70 transition-colors"
             >
               <span className="material-symbols-outlined text-sm align-middle mr-1">download</span>
               Export Data
             </button>
 
-            <label className="text-sm font-medium px-4 py-2 rounded-xl border border-[#2A2F38] hover:bg-[#1F2630] text-slate-300 transition-colors cursor-pointer">
+            <label className="text-sm font-medium px-4 py-2 rounded-xl border border-on-surface/10 hover:bg-[#1F2630] text-on-surface/70 transition-colors cursor-pointer">
               <span className="material-symbols-outlined text-sm align-middle mr-1">upload</span>
               Import Data
               <input type="file" accept=".json" className="hidden" onChange={handleImport} />
@@ -179,9 +179,9 @@ export default function Profile() {
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Are you sure?</span>
-                <button onClick={handleClear} className="text-sm font-medium px-4 py-2 rounded-xl bg-[#EF4444] hover:bg-[#CC3333] text-white transition-colors">Yes, clear it</button>
-                <button onClick={() => setShowClearConfirm(false)} className="text-sm font-medium px-4 py-2 rounded-xl border border-[#2A2F38] text-slate-400 hover:bg-[#1F2630] transition-colors">Cancel</button>
+                <span className="text-xs text-on-surface/40 font-body">Are you sure?</span>
+                <button onClick={handleClear} className="text-sm font-medium px-4 py-2 rounded-xl bg-[#EF4444] hover:bg-[#CC3333] text-on-surface transition-colors">Yes, clear it</button>
+                <button onClick={() => setShowClearConfirm(false)} className="text-sm font-medium px-4 py-2 rounded-xl border border-on-surface/10 text-on-surface/60 font-body hover:bg-[#1F2630] transition-colors">Cancel</button>
               </div>
             )}
           </div>
@@ -194,10 +194,10 @@ export default function Profile() {
         {/* About */}
         <div className={cardCls}>
           <h3 className={sectionTitle}>About</h3>
-          <div className="space-y-2 text-sm text-slate-500">
-            <div className="flex justify-between py-1"><span>Platform</span><span className="text-slate-300">Arthniti</span></div>
-            <div className="flex justify-between py-1"><span>Network</span><span className="text-slate-300">Algorand Testnet</span></div>
-            <div className="flex justify-between py-1"><span>Wallet</span><span className="text-slate-300">Pera Wallet</span></div>
+          <div className="space-y-2 text-sm text-on-surface/40 font-body">
+            <div className="flex justify-between py-1"><span>Platform</span><span className="text-on-surface/70">Arthniti</span></div>
+            <div className="flex justify-between py-1"><span>Network</span><span className="text-on-surface/70">Algorand Testnet</span></div>
+            <div className="flex justify-between py-1"><span>Wallet</span><span className="text-on-surface/70">Pera Wallet</span></div>
             <div className="flex justify-between py-1"><span>ALGO Rate</span><span className="text-[#2962FF] font-medium">₹{ALGO_TO_INR.toLocaleString()} / ALGO</span></div>
           </div>
         </div>

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useWallet } from '@txnlab/use-wallet-react';
 import { usePredX } from '../context/PredXContext';
 import Home from './Home';
 import Dashboard from './Dashboard';
@@ -16,8 +17,25 @@ import Goals from './Goals';
 import Transactions from './Transactions';
 import WealthOverview from './WealthOverview';
 
+// Pages that can be accessed without a wallet (public pages)
+const PUBLIC_PAGES = new Set(['home', 'markets', 'leaderboard', 'education', 'support']);
+
 const AppRouter: React.FC = () => {
-  const { currentPage } = usePredX();
+  const { currentPage, navigate } = usePredX();
+  const { activeAddress } = useWallet();
+
+  // ── Auto-redirect logic for login/logout ──
+  useEffect(() => {
+    if (!activeAddress && !PUBLIC_PAGES.has(currentPage)) {
+      // Wallet disconnected while on a protected page → go to login
+      navigate('home');
+    }
+  }, [activeAddress, currentPage, navigate]);
+
+  // ── Guard: if no wallet and not on a public page, show Home (login) ──
+  if (!activeAddress && !PUBLIC_PAGES.has(currentPage)) {
+    return <Home />;
+  }
 
   switch (currentPage) {
     // ── Existing PredX pages (untouched) ─────────────────────────────────────

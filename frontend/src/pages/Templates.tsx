@@ -92,15 +92,15 @@ export default function Templates() {
   return (
     <div className="space-y-8">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100">Finance Templates</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h2 className="text-2xl font-bold font-headline text-on-surface tracking-tight">Finance Templates</h2>
+          <p className="text-sm text-on-surface/40 font-body mt-0.5">
             Sector-wise templates for budgeting, debt, investing, tax, insurance, and retirement planning.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {templates.map((template) => (
-            <article key={template.name} className="bg-[#161B22] border border-[#2A2F38] rounded-xl p-5 hover:border-[#3a4a5f] transition-colors">
+            <article key={template.name} className="bg-on-surface/5 backdrop-blur-xl border border-on-surface/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)] rounded-xl p-5 hover:border-[#3a4a5f] transition-colors">
               <div className="flex items-center justify-between gap-3 mb-2">
                 <p
                   className="text-xs uppercase tracking-wide font-bold"
@@ -108,13 +108,13 @@ export default function Templates() {
                 >
                   {template.sector}
                 </p>
-                <span className="text-xs text-slate-500">{template.cadence}</span>
+                <span className="text-xs text-on-surface/40 font-body">{template.cadence}</span>
               </div>
-              <h3 className="text-base font-semibold text-slate-100">{template.name}</h3>
-              <p className="text-xs text-slate-400 mt-1">{template.objective}</p>
+              <h3 className="text-base font-semibold text-on-surface">{template.name}</h3>
+              <p className="text-xs text-on-surface/60 font-body mt-1">{template.objective}</p>
               <ol className="mt-3 space-y-1.5">
                 {template.steps.map((step, index) => (
-                  <li key={step} className="text-xs text-slate-300 flex items-start gap-2">
+                  <li key={step} className="text-xs text-on-surface/70 flex items-start gap-2">
                     <span
                       className="mt-0.5 size-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
                       style={{ backgroundColor: `${SECTOR_COLOR[template.sector] ?? '#2962FF'}20`, color: SECTOR_COLOR[template.sector] ?? '#2962FF' }}

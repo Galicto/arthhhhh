@@ -92,11 +92,11 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
   // ── Trigger button (before analysis) ──────────────────────────────────────
   if (!result && !loading && !error) {
     return (
-      <div className="mt-4 flex items-center gap-3 pt-3 border-t border-[#2A2F38]">
+      <div className="mt-4 flex items-center gap-3 pt-3 border-t border-on-surface/10">
         <select
           value={riskTolerance}
           onChange={(e) => setRiskTolerance(e.target.value as typeof riskTolerance)}
-          className="bg-[#0E1117] border border-[#2A2F38] text-slate-400 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#2962FF] transition-colors"
+          className="bg-[#0E1117] border border-on-surface/10 text-on-surface/60 font-body text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#2962FF] transition-colors"
         >
           <option value="all">All Risk Levels</option>
           <option value="low">Low Risk Only</option>
@@ -105,7 +105,7 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
         </select>
         <button
           onClick={analyze}
-          className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-[#2962FF] to-[#5B89FF] hover:from-[#2255DD] hover:to-[#4a78ee] text-white text-xs font-semibold rounded-lg transition-all shadow-lg shadow-[#2962FF]/20"
+          className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-[#2962FF] to-[#5B89FF] hover:from-[#2255DD] hover:to-[#4a78ee] text-on-surface text-xs font-semibold rounded-lg transition-all shadow-lg shadow-[#2962FF]/20"
         >
           <span className="material-symbols-outlined text-sm">auto_awesome</span>
           AI Goal Plan
@@ -117,8 +117,8 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
   // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="mt-4 bg-[#0E1117] border border-[#2A2F38] rounded-xl p-6">
-        <div className="flex items-center justify-center gap-3 text-slate-400">
+      <div className="mt-4 bg-[#0E1117] border border-on-surface/10 rounded-xl p-6">
+        <div className="flex items-center justify-center gap-3 text-on-surface/60 font-body">
           <div className="w-5 h-5 border-2 border-[#2962FF] border-t-transparent rounded-full animate-spin" />
           <span className="text-sm">Generating personalised investment plans via AI...</span>
         </div>
@@ -132,7 +132,7 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
     return (
       <div className="mt-4 bg-[#EF4444]/10 border border-[#EF4444]/20 rounded-xl p-4">
         <p className="text-sm text-[#EF4444] font-medium">Failed to generate plan</p>
-        <p className="text-xs text-slate-500 mt-1">{error}</p>
+        <p className="text-xs text-on-surface/40 font-body mt-1">{error}</p>
         <button onClick={analyze} className="mt-2 text-xs text-[#2962FF] underline">Retry</button>
       </div>
     );
@@ -152,7 +152,7 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-[#2962FF] text-lg">auto_awesome</span>
-          <h4 className="font-bold text-slate-100 text-sm">AI Investment Plan</h4>
+          <h4 className="font-bold font-headline text-on-surface tracking-tight text-sm">AI Investment Plan</h4>
           <span className="text-[9px] bg-[#2962FF]/20 text-[#2962FF] border border-[#2962FF]/30 px-1.5 py-0.5 rounded font-bold tracking-wider">BETA</span>
         </div>
         <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
           )}
           <button
             onClick={analyze}
-            className="px-2.5 py-1 bg-[#161B22] hover:bg-[#2A2F38] text-slate-400 text-xs rounded-lg border border-[#2A2F38] transition-colors"
+            className="px-2.5 py-1 bg-on-surface/5 backdrop-blur-xl hover:bg-[#2A2F38] text-on-surface/60 font-body text-xs rounded-lg border border-on-surface/10 transition-colors"
           >
             Refresh
           </button>
@@ -174,13 +174,13 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
       {/* ── Overview stats ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {[
-          { label: 'Target', value: inr(result.goal_amount), color: 'text-slate-100' },
+          { label: 'Target', value: inr(result.goal_amount), color: 'text-on-surface' },
           { label: 'Still Need', value: inr(result.amount_needed), color: 'text-[#EF4444]' },
           { label: 'Disposable', value: inr(result.disposable), color: 'text-[#22C55E]' },
           { label: 'Duration', value: `${result.duration_months} mo`, color: 'text-[#2962FF]' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-[#161B22] rounded-lg p-2.5 text-center border border-[#2A2F38]">
-            <p className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</p>
+          <div key={label} className="bg-on-surface/5 backdrop-blur-xl rounded-lg p-2.5 text-center border border-on-surface/10">
+            <p className="text-[10px] text-on-surface/40 font-body uppercase tracking-wider">{label}</p>
             <p className={`text-sm font-bold mt-0.5 ${color}`}>{value}</p>
           </div>
         ))}
@@ -198,7 +198,7 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
                 key={key}
                 onClick={() => setActiveRisk(key)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  isActive ? style.active : 'bg-[#161B22] text-slate-400 border-[#2A2F38] hover:bg-[#2A2F38]'
+                  isActive ? style.active : 'bg-on-surface/5 backdrop-blur-xl text-on-surface/60 font-body border-on-surface/10 hover:bg-[#2A2F38]'
                 }`}
               >
                 {style.label}
@@ -214,12 +214,12 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
         <div className="space-y-4">
           {/* SIP + achievability hero */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="bg-[#161B22] border border-[#2962FF]/30 rounded-lg px-4 py-2.5">
-              <span className="text-[10px] text-slate-500 uppercase tracking-wider">Monthly SIP Required</span>
+            <div className="bg-on-surface/5 backdrop-blur-xl border border-[#2962FF]/30 rounded-lg px-4 py-2.5">
+              <span className="text-[10px] text-on-surface/40 font-body uppercase tracking-wider">Monthly SIP Required</span>
               <p className="text-xl font-bold text-[#2962FF] mt-0.5">{inr(activePlan.monthly_sip)}</p>
             </div>
-            <div className="bg-[#161B22] border border-[#22C55E]/30 rounded-lg px-4 py-2.5">
-              <span className="text-[10px] text-slate-500 uppercase tracking-wider">Blended Return</span>
+            <div className="bg-on-surface/5 backdrop-blur-xl border border-[#22C55E]/30 rounded-lg px-4 py-2.5">
+              <span className="text-[10px] text-on-surface/40 font-body uppercase tracking-wider">Blended Return</span>
               <p className="text-xl font-bold text-[#22C55E] mt-0.5">{activePlan.blended_return?.toFixed(1)}% p.a.</p>
             </div>
             <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
@@ -239,24 +239,24 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
 
           {/* Instruments */}
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Instrument Allocation</p>
+            <p className="text-[10px] font-bold text-on-surface/40 font-body uppercase tracking-widest mb-2">Instrument Allocation</p>
             <div className="space-y-2">
               {(activePlan.instruments ?? []).map((inst) => (
-                <div key={inst.name} className="bg-[#161B22] border border-[#2A2F38] rounded-lg p-3">
+                <div key={inst.name} className="bg-on-surface/5 backdrop-blur-xl border border-on-surface/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)] rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-slate-200">{inst.name}</span>
-                    <span className="text-sm font-bold text-[#2962FF]">{inr(inst.monthly_amount)}<span className="text-xs font-normal text-slate-500">/mo</span></span>
+                    <span className="text-sm font-semibold text-on-surface/80">{inst.name}</span>
+                    <span className="text-sm font-bold text-[#2962FF]">{inr(inst.monthly_amount)}<span className="text-xs font-normal text-on-surface/40 font-body">/mo</span></span>
                   </div>
                   {/* Allocation bar */}
                   <div className="w-full h-1 bg-[#2A2F38] rounded-full mb-1.5 overflow-hidden">
                     <div className="h-1 bg-[#2962FF] rounded-full" style={{ width: `${inst.allocation_pct}%` }} />
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <div className="flex items-center gap-3 text-xs text-on-surface/40 font-body">
                     <span>{inst.allocation_pct}% allocation</span>
                     <span>{inst.expected_return}% p.a.</span>
                     <span className="text-slate-600">{inst.data_source}</span>
                   </div>
-                  {inst.why && <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">{inst.why}</p>}
+                  {inst.why && <p className="text-xs text-on-surface/40 font-body mt-1.5 leading-relaxed">{inst.why}</p>}
                 </div>
               ))}
             </div>
@@ -265,16 +265,16 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
           {/* Milestones */}
           {(activePlan.milestones ?? []).length > 0 && (
             <div>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Projected Milestones</p>
+              <p className="text-[10px] font-bold text-on-surface/40 font-body uppercase tracking-widest mb-2">Projected Milestones</p>
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {activePlan.milestones.map((m) => (
-                  <div key={m.month} className="flex-shrink-0 bg-[#161B22] border border-[#2A2F38] rounded-lg p-3 min-w-[110px] text-center">
-                    <p className="text-[10px] text-slate-500">Month {m.month}</p>
-                    <p className="text-sm font-bold text-slate-100 mt-0.5">{inr(m.corpus)}</p>
+                  <div key={m.month} className="flex-shrink-0 bg-on-surface/5 backdrop-blur-xl border border-on-surface/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)] rounded-lg p-3 min-w-[110px] text-center">
+                    <p className="text-[10px] text-on-surface/40 font-body">Month {m.month}</p>
+                    <p className="text-sm font-bold font-headline text-on-surface tracking-tight mt-0.5">{inr(m.corpus)}</p>
                     <div className="w-full h-1 bg-[#2A2F38] rounded-full mt-1.5 overflow-hidden">
                       <div className="h-1 bg-[#00FFA3] rounded-full" style={{ width: `${Math.min(m.progress_pct, 100)}%` }} />
                     </div>
-                    <p className="text-[10px] text-slate-500 mt-1">{m.progress_pct?.toFixed(0)}%</p>
+                    <p className="text-[10px] text-on-surface/40 font-body mt-1">{m.progress_pct?.toFixed(0)}%</p>
                   </div>
                 ))}
               </div>
@@ -290,12 +290,12 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
             <span className="material-symbols-outlined text-sm text-[#2962FF]">psychology</span>
             <p className="text-[10px] font-bold text-[#2962FF] uppercase tracking-widest">AI Analysis</p>
           </div>
-          <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{result.narrative}</p>
+          <p className="text-sm text-on-surface/70 leading-relaxed whitespace-pre-line">{result.narrative}</p>
         </div>
       )}
 
       {/* ── Footer ── */}
-      <div className="flex items-center gap-3 text-[10px] text-slate-600 pt-2 border-t border-[#2A2F38] flex-wrap">
+      <div className="flex items-center gap-3 text-[10px] text-slate-600 pt-2 border-t border-on-surface/10 flex-wrap">
         {result.inflation_rate && <span>Inflation assumed: {result.inflation_rate}%</span>}
         {result.data_fetched_at && <span>Generated: {new Date(result.data_fetched_at).toLocaleString('en-IN')}</span>}
       </div>

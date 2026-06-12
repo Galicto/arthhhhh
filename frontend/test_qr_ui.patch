@@ -1,0 +1,11 @@
+--- src/pages/Home.tsx
++++ src/pages/Home.tsx
+@@ -101,7 +101,7 @@
+   }
+ 
+   /* ─── POST-LOGIN: QR Verification Gateway ─── */
+-  if (activeAddress && !isVerified) {
++  if (true) {
+     return (
+       <DashboardLayout>
+         <CinematicBackground />

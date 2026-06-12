@@ -4,48 +4,48 @@
 
 :root,
 .theme-dark {
-  --surface-tint: 0 226 144;
+  --surface-tint: 255 90 0;
   --on-background: 224 226 234;
   --secondary: 188 199 222;
   --error: 255 180 171;
-  --on-primary-container: 0 113 70;
+  --on-primary-container: 255 255 255;
   --tertiary-fixed-dim: 210 187 255;
-  --surface-dim: 16 20 25;
-  --surface-container-lowest: 10 14 19;
+  --surface-dim: 13 13 15;
+  --surface-container-lowest: 10 10 12;
   --on-secondary: 38 49 67;
-  --primary-fixed-dim: 0 226 144;
+  --primary-fixed-dim: 255 90 0;
   --on-tertiary-container: 120 52 233;
   --inverse-surface: 224 226 234;
-  --on-primary-fixed-variant: 0 82 49;
+  --on-primary-fixed-variant: 255 200 150;
   --secondary-fixed-dim: 188 199 222;
-  --surface-container-low: 24 28 33;
+  --surface-container-low: 20 20 22;
   --error-container: 147 0 10;
-  --primary-container: 0 255 163;
-  --outline-variant: 58 74 63;
+  --primary-container: 255 90 0;
+  --outline-variant: 40 40 45;
   --on-secondary-fixed-variant: 60 71 90;
-  --surface-container-highest: 49 53 59;
+  --surface-container-highest: 35 35 40;
   --on-surface-variant: 185 203 189;
-  --surface-container: 28 32 37;
-  --background: 16 20 25;
-  --primary-fixed: 82 255 172;
-  --on-surface: 224 226 234;
+  --surface-container: 24 24 28;
+  --background: 13 13 15;
+  --primary-fixed: 255 120 50;
+  --on-surface: 230 230 240;
   --on-tertiary-fixed: 37 0 90;
-  --surface-container-high: 38 42 48;
-  --inverse-primary: 0 109 67;
-  --primary: 245 255 245;
+  --surface-container-high: 30 30 35;
+  --inverse-primary: 255 90 0;
+  --primary: 255 90 0;
   --tertiary: 255 251 255;
   --on-secondary-fixed: 17 28 45;
   --secondary-container: 62 73 93;
   --tertiary-container: 232 217 255;
   --on-error-container: 255 218 214;
-  --on-primary-fixed: 0 33 17;
+  --on-primary-fixed: 255 255 255;
   --surface: 16 20 25;
   --on-tertiary: 63 0 142;
   --on-error: 105 0 5;
   --surface-variant: 49 53 59;
   --secondary-fixed: 216 227 251;
   --outline: 132 149 136;
-  --on-primary: 0 57 32;
+  --on-primary: 255 255 255;
   --on-tertiary-fixed-variant: 90 0 198;
   --tertiary-fixed: 234 221 255;
   --on-secondary-container: 174 185 208;
@@ -377,3 +377,451 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ========================================
+   ARTHNITI — Premium Login Gateway Styles
+   v5 — Spline 3D background
+   ======================================== */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Full-screen Gateway Container ---------- */
+.arthniti-gateway {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 2rem 8rem;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none; /* Let clicks pass through to Spline if needed */
+}
+
+.arthniti-gateway > * {
+  pointer-events: auto; /* Re-enable clicks for children */
+}
+
+/* ---------- Login Panel (Obsidian Metal Glass) ---------- */
+.arthniti-login-panel {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  padding: 3.5rem 2.5rem 3rem;
+  background: rgb(var(--surface-container) / 0.75);
+  backdrop-filter: blur(50px) saturate(1.4);
+  -webkit-backdrop-filter: blur(50px) saturate(1.4);
+  border-radius: 24px;
+  box-shadow:
+    0 0 0 1px rgba(128, 128, 128, 0.05) inset,
+    0 1px 0 0 rgba(128, 128, 128, 0.05) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.1) inset,
+    0 50px 100px -20px rgba(0, 0, 0, 0.2),
+    0 25px 50px -10px rgba(0, 0, 0, 0.1);
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, transparent 40%, rgba(255, 255, 255, 0.01) 100%);
+  animation: arthniti-panel-enter 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(24px) scale(0.98);
+  transition: box-shadow 0.4s ease;
+}
+
+.arthniti-login-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.04));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.arthniti-login-panel:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.4) inset,
+    0 50px 100px -20px rgba(0, 0, 0, 0.8),
+    0 25px 50px -10px rgba(0, 0, 0, 0.6),
+    0 0 40px -10px rgba(255, 255, 255, 0.03);
+}
+
+@keyframes arthniti-panel-enter {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arthniti-login-panel {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Brand Identity ---------- */
+.arthniti-login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+
+.arthniti-login-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.02),
+    0 8px 24px rgba(0, 0, 0, 0.6);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+
+.arthniti-login-logo:hover {
+  transform: scale(1.04);
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.03),
+    0 12px 30px rgba(0, 0, 0, 0.8);
+}
+
+.arthniti-login-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+  font-size: 2.2rem;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, rgb(var(--on-surface)) 0%, rgb(var(--on-surface-variant)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Decorative Separator ---------- */
+.arthniti-login-separator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+  width: 55%;
+}
+
+.arthniti-login-separator-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--on-surface) / 0.15), transparent);
+}
+
+.arthniti-login-separator-diamond {
+  width: 4px;
+  height: 4px;
+  background: rgb(var(--on-surface) / 0.4);
+  transform: rotate(45deg);
+  border-radius: 0.5px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgb(var(--on-surface) / 0.2);
+}
+
+/* ---------- Tagline ---------- */
+.arthniti-login-tagline {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: rgb(var(--on-surface) / 0.5);
+  letter-spacing: 0.025em;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  max-width: 260px;
+}
+
+/* ---------- Connect CTA Button ---------- */
+.arthniti-login-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, rgb(var(--on-surface) / 0.08) 0%, rgb(var(--on-surface) / 0.02) 100%);
+  border: 1px solid rgb(var(--on-surface) / 0.12);
+  border-radius: 14px;
+  color: rgb(var(--on-surface));
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Sweep highlight on hover */
+.arthniti-login-cta::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  transform: skewX(-20deg);
+  transition: none;
+  pointer-events: none;
+}
+
+.arthniti-login-cta:hover::after {
+  animation: arthniti-cta-sweep 0.7s ease forwards;
+}
+
+@keyframes arthniti-cta-sweep {
+  0% { left: -100%; }
+  100% { left: 150%; }
+}
+
+.arthniti-login-cta:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 6px 20px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+.arthniti-login-cta:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.1s;
+}
+
+.arthniti-login-cta:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.4);
+  outline-offset: 3px;
+}
+
+.arthniti-login-cta-icon {
+  font-size: 20px;
+  opacity: 0.9;
+}
+
+/* ---------- Network Indicator ---------- */
+.arthniti-login-network {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.arthniti-login-network-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(100, 244, 166, 0.8);
+  box-shadow: 0 0 10px rgba(100, 244, 166, 0.4);
+  animation: arthniti-dot-pulse 3s ease-in-out infinite;
+}
+
+@keyframes arthniti-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arthniti-login-network-dot { animation: none; }
+  .arthniti-login-cta::after { display: none; }
+}
+
+/* ---------- Footer Attribution ---------- */
+.arthniti-login-footer {
+  position: absolute;
+  bottom: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 400;
+  color: rgba(160, 185, 175, 0.1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  z-index: 20;
+}
+
+/* ---------- Header Connect Button (logged-out) ---------- */
+.arthniti-connect-btn {
+  padding: 7px 22px;
+  background: rgba(100, 244, 166, 0.06);
+  border: 1px solid rgba(100, 244, 166, 0.15);
+  border-radius: 9999px;
+  color: #64f4a6;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.2);
+}
+
+.arthniti-connect-btn:hover {
+  border-color: rgba(100, 244, 166, 0.3);
+  box-shadow: 0 0 20px rgba(100, 244, 166, 0.1), 0 2px 12px rgba(0, 0, 0, 0.3);
+  background: rgba(100, 244, 166, 0.1);
+}
+
+.arthniti-connect-btn:active {
+  transform: scale(0.95);
+  transition-duration: 0.1s;
+}
+
+.arthniti-connect-btn:focus-visible {
+  outline: 2px solid rgba(100, 244, 166, 0.4);
+  outline-offset: 2px;
+}
+
+/* ---------- Hide ElevenLabs widget on login screen ---------- */
+.arthniti-gateway ~ elevenlabs-convai,
+body:has(.arthniti-gateway) elevenlabs-convai {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ---------- Hide "Built with Spline" watermark ---------- */
+a[href*="spline.design"],
+a[href*="spline.design"] *,
+div[style] > a[href*="spline"],
+[data-spline] + a,
+canvas ~ a,
+canvas ~ div > a,
+canvas + a,
+canvas + div,
+#spline-watermark,
+img[src*="spline"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0) !important;
+}
+
+@media (max-width: 768px) {
+  .arthniti-gateway {
+    justify-content: center;
+    padding: 2rem 1.5rem;
+  }
+
+  .arthniti-login-panel {
+    padding: 2.25rem 1.75rem 2rem;
+    border-radius: 18px;
+    max-width: 380px;
+  }
+
+  .arthniti-login-logo {
+    width: 52px;
+    height: 52px;
+  }
+
+  .arthniti-login-title {
+    font-size: 1.85rem;
+  }
+
+  .arthniti-login-tagline {
+    font-size: 0.78rem;
+  }
+
+  .arthniti-login-cta {
+    padding: 12px 22px;
+    font-size: 0.82rem;
+    max-width: 240px;
+  }
+
+  .arthniti-login-footer {
+    bottom: 1.25rem;
+    font-size: 0.55rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .arthniti-gateway {
+    justify-content: center;
+    padding: 1.5rem 1rem;
+  }
+
+  .arthniti-login-panel {
+    padding: 2rem 1.25rem 1.75rem;
+    border-radius: 16px;
+    max-width: 340px;
+  }
+
+  .arthniti-login-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .arthniti-login-title {
+    font-size: 1.6rem;
+  }
+
+  .arthniti-login-separator {
+    width: 50%;
+  }
+
+  .arthniti-login-tagline {
+    font-size: 0.75rem;
+    max-width: 230px;
+  }
+
+  .arthniti-login-cta {
+    max-width: 220px;
+    padding: 11px 20px;
+    font-size: 0.8rem;
+  }
+}
+
+
+
+
+
+
+/* Invert spline for light mode */
+.theme-light .cinematic-wrapper canvas {
+  filter: invert(1) hue-rotate(180deg) brightness(1.2) contrast(1.1);
+}
+

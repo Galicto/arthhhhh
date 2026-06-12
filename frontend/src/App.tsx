@@ -24,7 +24,7 @@ export default function App() {
       action={(snackbarId) => (
         <button 
           onClick={() => closeSnackbar(snackbarId)} 
-          className="text-white hover:bg-white/20 rounded-full transition-colors p-1 m-1 flex items-center justify-center bg-transparent border-none cursor-pointer"
+          className="text-on-surface hover:bg-on-surface/20 rounded-full transition-colors p-1 m-1 flex items-center justify-center bg-transparent border-none cursor-pointer"
         >
           <span className="material-symbols-outlined text-[18px]">close</span>
         </button>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePredX } from '../context/PredXContext';
+import AnimatedNumber from './AnimatedNumber';
 
 interface BalanceDisplayProps {
   value: number;
@@ -12,17 +13,22 @@ interface BalanceDisplayProps {
 const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
   value,
   decimals = 2,
-  currency = 'ALGO',
+  currency = '', // empty by default so we don't get double ALGO
   showIcon = false,
   className = ''
 }) => {
   const { isBalanceHidden, toggleBalanceVisibility } = usePredX();
 
-  const displayValue = isBalanceHidden ? '****' : value.toFixed(decimals);
-
   return (
     <div className={`inline-flex items-center ${className}`}>
-      <span>{displayValue} {currency}</span>
+      {isBalanceHidden ? (
+        <span>****{currency ? ` ${currency}` : ''}</span>
+      ) : (
+        <span>
+          <AnimatedNumber value={value} decimals={decimals} />
+          {currency && ` ${currency}`}
+        </span>
+      )}
       {showIcon && (
         <button
           onClick={toggleBalanceVisibility}

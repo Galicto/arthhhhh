@@ -7,11 +7,14 @@ import Bank from '../components/Bank'
 import DashboardLayout from '../components/DashboardLayout'
 import { usePredX } from '../context/PredXContext'
 import { ellipseAddress } from '../utils/ellipseAddress'
-import { useOraclePrice } from '../hooks/useOraclePrice'
-import algosdk from 'algosdk'
+import { useOraclePrice } from '../hooks/useOraclePrice';
+import algosdk from 'algosdk';
+import ReactMarkdown from 'react-markdown';
+import AnimatedNumber from '../components/AnimatedNumber';
 import BalanceDisplay from '../components/BalanceDisplay'
 import { getCryptoPrices, type CryptoTicker } from '../lib/stockApi'
 import ExpenseImpactAgent from '../components/ExpenseImpactAgent'
+import { useReveal, revealClass } from '../hooks/useReveal'
 
 const USD_TO_INR = 85.5
 
@@ -338,6 +341,24 @@ Respond ONLY with valid JSON. No additional text.`
     return 'bg-surface-container-highest text-on-surface-variant'
   }
 
+  // ─── Scroll Reveal Hooks ────────────────────────────────────
+  const headerReveal = useReveal({ delay: 0 });
+  const stat0 = useReveal({ delay: 80 });
+  const stat1 = useReveal({ delay: 160 });
+  const stat2 = useReveal({ delay: 240 });
+  const stat3 = useReveal({ delay: 320 });
+  const aiPanelReveal = useReveal({ delay: 100 });
+  const newsPanelReveal = useReveal({ delay: 200 });
+  const cryptoReveal = useReveal({ delay: 100 });
+  const opsReveal = useReveal({ delay: 50 });
+  const op0 = useReveal({ delay: 100 });
+  const op1 = useReveal({ delay: 180 });
+  const op2 = useReveal({ delay: 260 });
+  const op3 = useReveal({ delay: 340 });
+  const positionsReveal = useReveal({ delay: 100 });
+  const tradesTableReveal = useReveal({ delay: 150 });
+  const predsTableReveal = useReveal({ delay: 250 });
+
   if (!activeAddress) {
     return (
       <DashboardLayout>
@@ -356,27 +377,28 @@ Respond ONLY with valid JSON. No additional text.`
     <DashboardLayout>
       <div className="px-4 md:px-8 pb-12 md:pb-8 pt-4">
         {/* Portfolio Header */}
-        <section className="mb-8">
-          <div className="bg-gradient-to-r from-surface-container-high to-surface-container/50 p-6 md:p-10 rounded-2xl border border-primary-container/10 relative overflow-hidden">
-            <div className="absolute right-0 top-0 w-64 h-64 bg-primary-container/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
+        <section ref={headerReveal.ref} className={`mb-8 ${revealClass(headerReveal.isVisible, 'scale')}`}>
+          <div className="bg-gradient-to-r from-surface-container-high to-surface-container/50 p-6 md:p-10 rounded-2xl border border-[#06B6D4]/15 relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-[#06B6D4]/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3"></div>
+            <div className="absolute left-0 bottom-0 w-48 h-48 bg-[#8B5CF6]/5 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/3"></div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
               <div>
                 <p className="text-on-surface-variant text-xs font-label uppercase tracking-widest mb-2">Portfolio Balance</p>
                 <h1 className="text-4xl md:text-5xl font-headline font-black text-on-surface leading-tight">
                   <BalanceDisplay value={algoBalance} decimals={2} showIcon />
-                  <span className="text-primary-container text-lg ml-2">ALGO</span>
+                  <span className="text-primary text-lg ml-2">ALGO</span>
                 </h1>
                 {algoPrice && !isBalanceHidden && (
                   <div className="flex flex-wrap gap-4 mt-2">
-                    <p className="text-on-surface-variant text-sm">≈ ${usdBalance.toFixed(2)} <span className="text-xs opacity-60">USD</span></p>
-                    <p className="text-on-surface-variant text-sm">≈ ₹{inrBalance.toFixed(2)} <span className="text-xs opacity-60">INR</span></p>
+                    <p className="text-on-surface-variant text-sm">≈ <span className="text-[#3B82F6] font-semibold">$<AnimatedNumber value={usdBalance} decimals={2} /></span> <span className="text-xs opacity-60">USD</span></p>
+                    <p className="text-on-surface-variant text-sm">≈ <span className="text-[#22C55E] font-semibold">₹<AnimatedNumber value={inrBalance} decimals={2} /></span> <span className="text-xs opacity-60">INR</span></p>
                   </div>
                 )}
               </div>
               <div className="text-left md:text-right">
                 <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">Wallet</p>
                 <p className="font-mono text-sm text-on-surface">{ellipseAddress(activeAddress, 8)}</p>
-                <p className="text-[10px] text-primary-container font-bold mt-1 uppercase tracking-widest">Algorand TestNet</p>
+                <p className="text-[10px] text-[#8B5CF6] font-bold mt-1 uppercase tracking-widest">Algorand TestNet</p>
               </div>
             </div>
           </div>
@@ -384,9 +406,13 @@ Respond ONLY with valid JSON. No additional text.`
 
         {/* Stats Grid */}
         <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-surface-container p-6 rounded-xl border border-primary-container/10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary-container/5 blur-2xl"></div>
-            <span className="text-primary-container font-label text-[10px] uppercase tracking-widest">ALGO Balance</span>
+          {/* ALGO Balance - Cyan/Teal */}
+          <div ref={stat0.ref} className={`bg-surface-container p-6 rounded-xl border border-[#06B6D4]/15 relative overflow-hidden group hover:border-primary/30 transition-all ${revealClass(stat0.isVisible, 'up')}`}>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#06B6D4]/8 blur-2xl group-hover:bg-[#06B6D4]/12 transition-all"></div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance_wallet</span>
+              <span className="text-primary font-label text-[10px] uppercase tracking-widest">ALGO Balance</span>
+            </div>
             <div className="text-2xl font-headline font-black text-on-surface mt-1">
               <BalanceDisplay value={algoBalance} decimals={4} />
             </div>
@@ -394,25 +420,39 @@ Respond ONLY with valid JSON. No additional text.`
               <p className="text-[10px] text-on-surface-variant mt-0.5">₹{inrBalance.toFixed(2)} INR</p>
             )}
           </div>
-          <div className="bg-surface-container p-6 rounded-xl border border-outline-variant/5">
-            <span className="text-on-surface-variant font-label text-[10px] uppercase tracking-widest">Active Positions</span>
-            <div className="text-2xl font-headline font-black text-on-surface mt-1">{totalActivePositions}</div>
+          {/* Active Positions - Violet */}
+          <div ref={stat1.ref} className={`bg-surface-container p-6 rounded-xl border border-[#8B5CF6]/10 relative overflow-hidden group hover:border-[#8B5CF6]/25 transition-all ${revealClass(stat1.isVisible, 'up')}`}>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#8B5CF6]/6 blur-2xl"></div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="material-symbols-outlined text-[#8B5CF6] text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>show_chart</span>
+              <span className="text-[#8B5CF6] font-label text-[10px] uppercase tracking-widest">Active Positions</span>
+            </div>
+            <div className="text-2xl font-headline font-black text-on-surface mt-1"><AnimatedNumber value={totalActivePositions} /></div>
           </div>
-          <div className="bg-surface-container p-6 rounded-xl border border-outline-variant/5">
-            <span className="text-on-surface-variant font-label text-[10px] uppercase tracking-widest">Total Wagered</span>
-            <div className="text-2xl font-headline font-black text-on-surface mt-1">{totalWagered.toFixed(2)} <span className="text-xs opacity-50">ALGO</span></div>
+          {/* Total Wagered - Amber */}
+          <div ref={stat2.ref} className={`bg-surface-container p-6 rounded-xl border border-[#F59E0B]/10 relative overflow-hidden group hover:border-[#F59E0B]/25 transition-all ${revealClass(stat2.isVisible, 'up')}`}>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-[#F59E0B]/6 blur-2xl"></div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="material-symbols-outlined text-[#F59E0B] text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+              <span className="text-[#F59E0B] font-label text-[10px] uppercase tracking-widest">Total Wagered</span>
+            </div>
+            <div className="text-2xl font-headline font-black text-on-surface mt-1"><AnimatedNumber value={totalWagered} decimals={2} /> <span className="text-xs opacity-50">ALGO</span></div>
           </div>
-          <div className="bg-surface-container p-6 rounded-xl border border-outline-variant/5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary-container/10 blur-xl"></div>
-            <span className="text-[#00FFA3] font-label text-[10px] uppercase tracking-widest">Potential Payout</span>
-            <div className="text-2xl font-headline font-black text-[#00FFA3] mt-1">{totalPotential.toFixed(2)} <span className="text-xs opacity-50">ALGO</span></div>
+          {/* Potential Payout - Emerald */}
+          <div ref={stat3.ref} className={`bg-surface-container p-6 rounded-xl border border-[#00FFA3]/10 relative overflow-hidden group hover:border-[#00FFA3]/25 transition-all ${revealClass(stat3.isVisible, 'up')}`}>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00FFA3]/6 blur-xl"></div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="material-symbols-outlined text-[#00FFA3] text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
+              <span className="text-[#00FFA3] font-label text-[10px] uppercase tracking-widest">Potential Payout</span>
+            </div>
+            <div className="text-2xl font-headline font-black text-[#00FFA3] mt-1"><AnimatedNumber value={totalPotential} decimals={2} /> <span className="text-xs opacity-50">ALGO</span></div>
           </div>
         </section>
 
         {/* ─── NEW: AI Analysis + News Grid ───────────────────── */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
           {/* ── AI Analyzer Panel ──────────────────────────── */}
-          <div className="lg:col-span-5 space-y-6">
+          <div ref={aiPanelReveal.ref} className={`lg:col-span-5 space-y-6 ${revealClass(aiPanelReveal.isVisible, 'left')}`}>
             <div className="bg-surface-container rounded-xl border border-outline-variant/10 overflow-hidden">
               <div className="px-5 py-4 border-b border-outline-variant/10 bg-gradient-to-r from-purple-500/5 to-transparent flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -563,7 +603,7 @@ Respond ONLY with valid JSON. No additional text.`
           </div>
 
           {/* ── News, Opportunities & Agents ───────────────────────── */}
-          <div className="lg:col-span-7 space-y-6 flex flex-col">
+          <div ref={newsPanelReveal.ref} className={`lg:col-span-7 space-y-6 flex flex-col ${revealClass(newsPanelReveal.isVisible, 'right')}`}>
             <div className="shrink-0">
               <ExpenseImpactAgent />
             </div>
@@ -611,9 +651,9 @@ Respond ONLY with valid JSON. No additional text.`
 
         {/* ── Live Crypto Ticker ──────────────────────────── */}
         {cryptoPrices.length > 0 && (
-          <section className="mb-8">
+          <section ref={cryptoReveal.ref} className={`mb-8 ${revealClass(cryptoReveal.isVisible, 'up')}`}>
             <h3 className="font-headline font-bold text-lg mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-[20px] text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>monitoring</span>
+              <span className="material-symbols-outlined text-[20px] text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>monitoring</span>
               Live Market Prices
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -640,41 +680,41 @@ Respond ONLY with valid JSON. No additional text.`
 
         {/* Operations Grid */}
         <section className="mb-8">
-          <h3 className="font-headline font-bold text-lg md:text-xl mb-6">Operations</h3>
+          <h3 ref={opsReveal.ref} className={`font-headline font-bold text-lg md:text-xl mb-6 ${revealClass(opsReveal.isVisible, 'fade')}`}>Operations</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="bg-surface-container-high p-6 rounded-xl border border-outline-variant/5 cursor-pointer hover:border-primary-container/30 transition-all group" onClick={() => setSendAlgoModal(true)}>
-              <div className="w-10 h-10 bg-surface-container-highest rounded-full flex items-center justify-center text-primary-container mb-4">
+            <div ref={op0.ref} className={`bg-surface-container-high p-6 rounded-xl border border-outline-variant/5 cursor-pointer hover:border-[#3B82F6]/30 transition-all group ${revealClass(op0.isVisible, 'up')}`} onClick={() => setSendAlgoModal(true)}>
+              <div className="w-10 h-10 bg-[#3B82F6]/10 rounded-full flex items-center justify-center text-[#3B82F6] mb-4">
                 <span className="material-symbols-outlined">send</span>
               </div>
-              <h4 className="font-bold text-on-surface text-sm group-hover:text-primary-container transition-colors">Send ALGO</h4>
+              <h4 className="font-bold text-on-surface text-sm group-hover:text-[#3B82F6] transition-colors">Send ALGO</h4>
               <p className="text-[10px] text-on-surface-variant mt-1">Transfer ALGO to any address</p>
             </div>
-            <div className="bg-surface-container-high p-6 rounded-xl border border-outline-variant/5 cursor-pointer hover:border-primary-container/30 transition-all group" onClick={() => setMintNftModal(true)}>
-              <div className="w-10 h-10 bg-surface-container-highest rounded-full flex items-center justify-center text-primary-container mb-4">
+            <div ref={op1.ref} className={`bg-surface-container-high p-6 rounded-xl border border-outline-variant/5 cursor-pointer hover:border-[#8B5CF6]/30 transition-all group ${revealClass(op1.isVisible, 'up')}`} onClick={() => setMintNftModal(true)}>
+              <div className="w-10 h-10 bg-[#8B5CF6]/10 rounded-full flex items-center justify-center text-[#8B5CF6] mb-4">
                 <span className="material-symbols-outlined">palette</span>
               </div>
-              <h4 className="font-bold text-on-surface text-sm group-hover:text-primary-container transition-colors">Mint NFT</h4>
+              <h4 className="font-bold text-on-surface text-sm group-hover:text-[#8B5CF6] transition-colors">Mint NFT</h4>
               <p className="text-[10px] text-on-surface-variant mt-1">Create ARC-3 NFTs</p>
             </div>
-            <div className="bg-surface-container-high p-6 rounded-xl border border-outline-variant/5 cursor-pointer hover:border-primary-container/30 transition-all group" onClick={() => setAssetOptInModal(true)}>
-              <div className="w-10 h-10 bg-surface-container-highest rounded-full flex items-center justify-center text-primary-container mb-4">
+            <div ref={op2.ref} className={`bg-surface-container-high p-6 rounded-xl border border-outline-variant/5 cursor-pointer hover:border-primary/30 transition-all group ${revealClass(op2.isVisible, 'up')}`} onClick={() => setAssetOptInModal(true)}>
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
                 <span className="material-symbols-outlined">add_circle</span>
               </div>
-              <h4 className="font-bold text-on-surface text-sm group-hover:text-primary-container transition-colors">Asset Opt-In</h4>
+              <h4 className="font-bold text-on-surface text-sm group-hover:text-primary transition-colors">Asset Opt-In</h4>
               <p className="text-[10px] text-on-surface-variant mt-1">Opt-in to receive any ASA</p>
             </div>
-            <div className="bg-surface-container-high p-6 rounded-xl border border-outline-variant/5 cursor-pointer hover:border-primary-container/30 transition-all group" onClick={() => setBankModal(true)}>
-              <div className="w-10 h-10 bg-surface-container-highest rounded-full flex items-center justify-center text-primary-container mb-4">
+            <div ref={op3.ref} className={`bg-surface-container-high p-6 rounded-xl border border-outline-variant/5 cursor-pointer hover:border-[#22C55E]/30 transition-all group ${revealClass(op3.isVisible, 'up')}`} onClick={() => setBankModal(true)}>
+              <div className="w-10 h-10 bg-[#22C55E]/10 rounded-full flex items-center justify-center text-[#22C55E] mb-4">
                 <span className="material-symbols-outlined">account_balance</span>
               </div>
-              <h4 className="font-bold text-on-surface text-sm group-hover:text-primary-container transition-colors">Bank Contract</h4>
+              <h4 className="font-bold text-on-surface text-sm group-hover:text-[#22C55E] transition-colors">Bank Contract</h4>
               <p className="text-[10px] text-on-surface-variant mt-1">Deposit & Withdraw</p>
             </div>
           </div>
         </section>
 
         {/* Positions Section */}
-        <section>
+        <section ref={positionsReveal.ref} className={revealClass(positionsReveal.isVisible, 'fade')}>
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-headline font-bold text-lg md:text-xl">My Positions</h3>
             <button onClick={() => navigate('markets')} className="text-primary-container text-xs font-bold hover:underline">
@@ -683,7 +723,7 @@ Respond ONLY with valid JSON. No additional text.`
           </div>
 
           <div className="space-y-6">
-            <div className="bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden">
+            <div ref={tradesTableReveal.ref} className={`bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden ${revealClass(tradesTableReveal.isVisible, 'up')}`}>
               <div className="px-6 py-4 border-b border-outline-variant/10 bg-surface-container-highest/20 flex items-center justify-between">
                 <h4 className="font-headline font-bold text-sm md:text-base">Trade Positions</h4>
                 <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">
@@ -742,7 +782,7 @@ Respond ONLY with valid JSON. No additional text.`
               )}
             </div>
 
-            <div className="bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden">
+            <div ref={predsTableReveal.ref} className={`bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden ${revealClass(predsTableReveal.isVisible, 'up')}`}>
               <div className="px-6 py-4 border-b border-outline-variant/10 bg-surface-container-highest/20 flex items-center justify-between">
                 <h4 className="font-headline font-bold text-sm md:text-base">Prediction Positions</h4>
                 <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">

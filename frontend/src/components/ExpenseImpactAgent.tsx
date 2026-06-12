@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { FinancialGoal } from '../types/wealthTypes';
+import { API_BASE_URL } from '../config';
 
 const GOALS_KEY = 'predx-finance-goals';
-const OLLAMA_URL = 'http://localhost:11434/api/generate';
-const OLLAMA_MODEL = 'llama3.2'; // Usually llama3 or llama3.2 is standard for ollama local runs
 
 function loadGoals(): FinancialGoal[] {
   try {
@@ -53,48 +52,33 @@ export default function ExpenseImpactAgent() {
     setAnalysis(null);
 
     const goals = loadGoals();
-    
-    // Create prompt for Ollama
-    const activeGoalsContext = goals.map(g => 
-      `- ${g.title} (${g.category}): Target ₹${g.targetAmount}, Currently Saved: ₹${g.currentSavings}, Needed by: ${g.targetDate}, Priority: ${g.priority}`
-    ).join('\n');
-
-    const prompt = `You are a highly analytical quantitative financial advisor API. Return a purely data-driven, numbers-heavy analysis.
-The user wants to spend ₹${expenseAmount} on "${expenseDescription}".
-
-User's active goals:
-${activeGoalsContext || 'No active goals recorded.'}
-
-Your response must focus strictly on numbers, percentages, and metrics. Do NOT use long narrative text or fluff.
-1. Calculate the exact percentage impact of this ₹${expenseAmount} expense against the target amount of the highest priority goal.
-2. Estimate the mathematical delay (in weeks or months) this causes for their top goals.
-3. Show the opportunity cost: what would ₹${expenseAmount} turn into if invested at 12% APY over 5 years?
-Use bullet points. Start lines with numbers or metrics. Highlight data in bold. Keep it under 150 words. Do not use markdown headers.`;
 
     try {
-      const response = await fetch(OLLAMA_URL, {
+      const response = await fetch(`${API_BASE_URL}/api/expense-impact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: OLLAMA_MODEL,
-          prompt,
-          stream: false // Using non-streaming for simpler state management
+          expenseAmount: parseFloat(expenseAmount),
+          expenseDescription,
+          goals,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Could not connect to Ollama. Ensure Ollama is running locally.');
+        throw new Error(`Server error (${response.status})`);
       }
 
       const data = await response.json();
-      setAnalysis(data.response);
+      if (data.error) throw new Error(data.error);
+      setAnalysis(data.analysis);
     } catch (err: any) {
-      console.error('Ollama connection error:', err);
-      setError(err.message || 'Failed to connect to local Ollama instance.');
+      console.error('Expense impact error:', err);
+      setError(err.message || 'Failed to analyze expense impact.');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="bg-surface-container rounded-xl border border-outline-variant/10 overflow-hidden h-full flex flex-col">
@@ -123,7 +107,7 @@ Use bullet points. Start lines with numbers or metrics. Highlight data in bold. 
                 value={expenseAmount}
                 onChange={e => setExpenseAmount(e.target.value)}
                 placeholder="e.g. 50000"
-                className="w-full bg-[#0E1117] border border-[#2A2F38] rounded-xl px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-[#2962FF] transition-colors"
+                className="w-full bg-[#0E1117] border border-on-surface/10 rounded-xl px-3 py-2 text-sm text-on-surface placeholder:text-slate-600 focus:outline-none focus:border-[#2962FF] transition-colors"
               />
             </div>
             <div>
@@ -134,7 +118,7 @@ Use bullet points. Start lines with numbers or metrics. Highlight data in bold. 
                 value={expenseDescription}
                 onChange={e => setExpenseDescription(e.target.value)}
                 placeholder="e.g. New iPhone"
-                className="w-full bg-[#0E1117] border border-[#2A2F38] rounded-xl px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-[#2962FF] transition-colors"
+                className="w-full bg-[#0E1117] border border-on-surface/10 rounded-xl px-3 py-2 text-sm text-on-surface placeholder:text-slate-600 focus:outline-none focus:border-[#2962FF] transition-colors"
               />
             </div>
           </div>
@@ -155,8 +139,8 @@ Use bullet points. Start lines with numbers or metrics. Highlight data in bold. 
         <div className="flex-1 bg-surface-container-low rounded-xl border border-outline-variant/5 p-4 min-h-[160px] overflow-y-auto custom-scrollbar">
           {!analysis && !loading && !error && (
             <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
-              <span className="material-symbols-outlined text-3xl mb-2 text-slate-500">search_insights</span>
-              <p className="text-xs text-slate-400">Awaiting your input to analyze goal impact.</p>
+              <span className="material-symbols-outlined text-3xl mb-2 text-on-surface/40 font-body">search_insights</span>
+              <p className="text-xs text-on-surface/60 font-body">Awaiting your input to analyze goal impact.</p>
             </div>
           )}
 

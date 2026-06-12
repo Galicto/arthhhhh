@@ -22,21 +22,21 @@ export default function WealthOverview() {
       <div className="px-4 md:px-8 pb-12 pt-6">
         {/* Page Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-100">Wealth Hub</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h2 className="text-2xl font-bold font-headline text-on-surface tracking-tight">Wealth Hub</h2>
+          <p className="text-sm text-on-surface/40 font-body mt-0.5">
             Manage your complete financial picture across income, expenses, investments, and debt.
           </p>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-[#2A2F38] scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-on-surface/10 scrollbar-hide">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors ${activeTab === tab.id
-                ? 'bg-[#2962FF] text-white shadow-md shadow-[#2962FF]/20'
-                : 'bg-[#161B22] border border-[#2A2F38] text-slate-400 hover:text-slate-200 hover:border-[#3a4a5f]'
+                ? 'bg-[#2962FF] text-on-surface shadow-md shadow-[#2962FF]/20'
+                : 'bg-on-surface/5 backdrop-blur-xl border border-on-surface/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)] text-on-surface/60 font-body hover:text-on-surface/80 hover:border-[#3a4a5f]'
                 }`}
             >
               <span className="material-symbols-outlined text-[18px]">

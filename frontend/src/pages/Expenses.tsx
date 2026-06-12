@@ -24,7 +24,7 @@ const CATEGORY_ICON: Record<string, string> = {
 const TYPE_BADGE: Record<string, ReactElement> = {
   need: <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#22C55E]/10 text-[#22C55E] tracking-wide">Need</span>,
   want: <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#8B5CF6]/10 text-[#8B5CF6] tracking-wide">Want</span>,
-  other: <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#2A2F38] text-slate-400 tracking-wide">Other</span>,
+  other: <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#2A2F38] text-on-surface/60 font-body tracking-wide">Other</span>,
 };
 
 function loadExpenses(): ExpenseEntry[] {
@@ -106,19 +106,19 @@ export default function Expenses() {
     savings: { amount: Math.max(0, incomeProxy - totalExpenses), target: 20 },
   };
 
-  const inputBase = 'w-full bg-[#0E1117] border border-[#2A2F38] rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-[#2962FF]';
+  const inputBase = 'w-full bg-[#0E1117] border border-on-surface/10 rounded-xl px-3 py-2.5 text-sm text-on-surface placeholder:text-slate-600 focus:outline-none focus:border-[#2962FF]';
 
   return (
     <div className="space-y-8">
       {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-100">Expense Tracking</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Manual entries + trade buy costs from your Pera Wallet.</p>
+            <h2 className="text-2xl font-bold font-headline text-on-surface tracking-tight">Expense Tracking</h2>
+            <p className="text-sm text-on-surface/40 font-body mt-0.5">Manual entries + trade buy costs from your Pera Wallet.</p>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="bg-[#2962FF] hover:bg-[#2255DD] text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2"
+            className="bg-[#2962FF] hover:bg-[#2255DD] text-on-surface text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-base">{showForm ? 'close' : 'add'}</span>
             {showForm ? 'Cancel' : 'Add Expense'}
@@ -127,21 +127,21 @@ export default function Expenses() {
 
         {/* Add form */}
         {showForm && (
-          <div className="bg-[#161B22] border border-[#2A2F38] rounded-2xl p-6">
-            <h3 className="font-bold text-slate-100 mb-4">Add Expense</h3>
+          <div className="bg-on-surface/5 backdrop-blur-xl border border-on-surface/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)] rounded-2xl p-6">
+            <h3 className="font-bold font-headline text-on-surface tracking-tight mb-4">Add Expense</h3>
             <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+                <label className="block text-xs text-on-surface/40 font-body uppercase tracking-wider mb-1.5">Description</label>
                 <input type="text" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="e.g., Grocery shopping" className={inputBase} />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Category</label>
+                <label className="block text-xs text-on-surface/40 font-body uppercase tracking-wider mb-1.5">Category</label>
                 <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className={inputBase}>
                   {Object.keys(CATEGORY_COLOR).map(c => <option key={c} value={c} className="capitalize">{c}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Type</label>
+                <label className="block text-xs text-on-surface/40 font-body uppercase tracking-wider mb-1.5">Type</label>
                 <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value as ExpenseEntry['type'] })} className={inputBase}>
                   <option value="need">Need</option>
                   <option value="want">Want</option>
@@ -149,15 +149,15 @@ export default function Expenses() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Amount (₹)</label>
+                <label className="block text-xs text-on-surface/40 font-body uppercase tracking-wider mb-1.5">Amount (₹)</label>
                 <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} placeholder="0" min="0" className={inputBase} />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
+                <label className="block text-xs text-on-surface/40 font-body uppercase tracking-wider mb-1.5">Date</label>
                 <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className={inputBase} />
               </div>
               <div className="sm:col-span-2">
-                <button type="submit" className="bg-[#2962FF] hover:bg-[#2255DD] text-white text-sm font-semibold px-5 py-2.5 rounded-xl">Add</button>
+                <button type="submit" className="bg-[#2962FF] hover:bg-[#2255DD] text-on-surface text-sm font-semibold px-5 py-2.5 rounded-xl">Add</button>
               </div>
             </form>
           </div>
@@ -169,11 +169,11 @@ export default function Expenses() {
             { label: 'Total Expenses', val: totalExpenses, color: 'text-[#EF4444]', icon: 'trending_down' },
             { label: 'Wallet Balance', val: incomeProxy, color: 'text-[#2962FF]', icon: 'account_balance_wallet' },
             { label: 'Net Savings', val: Math.max(0, incomeProxy - totalExpenses), color: 'text-[#22C55E]', icon: 'savings' },
-            { label: 'Transactions', val: allExpenses.length, color: 'text-slate-300', icon: 'receipt_long', isCount: true },
+            { label: 'Transactions', val: allExpenses.length, color: 'text-on-surface/70', icon: 'receipt_long', isCount: true },
           ].map(({ label, val, color, icon, isCount }) => (
-            <div key={label} className="bg-[#161B22] border border-[#2A2F38] rounded-xl p-5">
+            <div key={label} className="bg-on-surface/5 backdrop-blur-xl border border-on-surface/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)] rounded-xl p-5">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-slate-500">{label}</p>
+                <p className="text-xs text-on-surface/40 font-body">{label}</p>
                 <span className={`material-symbols-outlined text-xl ${color}`}>{icon}</span>
               </div>
               <p className={`text-xl font-bold ${color}`}>{isCount ? val : inr(val as number)}</p>
@@ -183,8 +183,8 @@ export default function Expenses() {
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-[#161B22] border border-[#2A2F38] rounded-xl p-5">
-            <h3 className="font-bold text-slate-100 mb-4">Spending by Category</h3>
+          <div className="lg:col-span-2 bg-on-surface/5 backdrop-blur-xl border border-on-surface/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)] rounded-xl p-5">
+            <h3 className="font-bold font-headline text-on-surface tracking-tight mb-4">Spending by Category</h3>
             {categorySegments.length > 0 ? (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                 <DonutChart segments={categorySegments} centerLabel="Total Spend" centerValue={inr(totalExpenses)} valueFormatter={inr} />
@@ -197,12 +197,12 @@ export default function Expenses() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-slate-300 capitalize font-medium">{c.category}</span>
+                            <span className="text-sm text-on-surface/70 capitalize font-medium">{c.category}</span>
                             {TYPE_BADGE[c.type]}
                           </div>
                           <div className="text-right">
-                            <span className="text-sm font-bold text-slate-100">{inr(c.amount)}</span>
-                            <p className="text-xs text-slate-500">{c.percentage.toFixed(0)}% · {c.count} txns</p>
+                            <span className="text-sm font-bold font-headline text-on-surface tracking-tight">{inr(c.amount)}</span>
+                            <p className="text-xs text-on-surface/40 font-body">{c.percentage.toFixed(0)}% · {c.count} txns</p>
                           </div>
                         </div>
                       </div>
@@ -211,14 +211,14 @@ export default function Expenses() {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-slate-500 text-center py-8">No expenses logged yet.</p>
+              <p className="text-sm text-on-surface/40 font-body text-center py-8">No expenses logged yet.</p>
             )}
           </div>
 
           {/* 50/30/20 */}
-          <div className="bg-[#161B22] border border-[#2A2F38] rounded-xl p-5">
-            <h3 className="font-bold text-slate-100 mb-1">50/30/20 Rule</h3>
-            <p className="text-xs text-slate-500 mb-4">Budget health (based on wallet balance)</p>
+          <div className="bg-on-surface/5 backdrop-blur-xl border border-on-surface/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)] rounded-xl p-5">
+            <h3 className="font-bold font-headline text-on-surface tracking-tight mb-1">50/30/20 Rule</h3>
+            <p className="text-xs text-on-surface/40 font-body mb-4">Budget health (based on wallet balance)</p>
             {[
               { label: 'Needs', data: rule.needs, color: '#22C55E', icon: 'check_circle' },
               { label: 'Wants', data: rule.wants, color: '#8B5CF6', icon: 'shopping_bag' },
@@ -227,19 +227,19 @@ export default function Expenses() {
               const pct = incomeProxy > 0 ? (data.amount / incomeProxy) * 100 : 0;
               const safePct = Math.min(Math.max(pct, 0), 100);
               return (
-                <div key={label} className="rounded-lg border border-[#2A2F38] bg-[#1F2630] p-3 mb-3">
+                <div key={label} className="rounded-lg border border-on-surface/10 bg-[#1F2630] p-3 mb-3">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-base" style={{ color }}>{icon}</span>
-                      <span className="text-sm font-medium text-slate-300">{label}</span>
-                      <span className="text-xs text-slate-500">target {data.target}%</span>
+                      <span className="text-sm font-medium text-on-surface/70">{label}</span>
+                      <span className="text-xs text-on-surface/40 font-body">target {data.target}%</span>
                     </div>
-                    <span className="text-sm font-bold text-slate-100">{pct.toFixed(0)}%</span>
+                    <span className="text-sm font-bold font-headline text-on-surface tracking-tight">{pct.toFixed(0)}%</span>
                   </div>
                   <div className="w-full h-1.5 bg-[#2A2F38] rounded-full overflow-hidden">
                     <div className="h-1.5 rounded-full" style={{ width: `${safePct}%`, backgroundColor: color }} />
                   </div>
-                  <p className="text-xs text-slate-400 mt-1.5">{inr(data.amount)}</p>
+                  <p className="text-xs text-on-surface/60 font-body mt-1.5">{inr(data.amount)}</p>
                 </div>
               );
             })}
@@ -248,12 +248,12 @@ export default function Expenses() {
 
         {/* Transaction list */}
         {allExpenses.length > 0 && (
-          <div className="bg-[#161B22] border border-[#2A2F38] rounded-xl overflow-hidden">
-            <div className="p-5 border-b border-[#2A2F38] flex items-center justify-between">
-              <h3 className="font-bold text-slate-100">All Expenses</h3>
-              <span className="text-xs text-slate-500">{allExpenses.length} entries</span>
+          <div className="bg-on-surface/5 backdrop-blur-xl border border-on-surface/10 shadow-[0_4px_20px_rgba(0,0,0,0.2)] rounded-xl overflow-hidden">
+            <div className="p-5 border-b border-on-surface/10 flex items-center justify-between">
+              <h3 className="font-bold font-headline text-on-surface tracking-tight">All Expenses</h3>
+              <span className="text-xs text-on-surface/40 font-body">{allExpenses.length} entries</span>
             </div>
-            <div className="overflow-y-auto max-h-96 divide-y divide-[#2A2F38]">
+            <div className="overflow-y-auto max-h-96 divide-y divide-white/10">
               {allExpenses.map(e => (
                 <div key={e.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#1F2630] transition-colors">
                   <div className="flex items-center gap-3">
@@ -261,8 +261,8 @@ export default function Expenses() {
                       <span className="material-symbols-outlined text-base" style={{ color: CATEGORY_COLOR[e.category] ?? '#64748B' }}>{CATEGORY_ICON[e.category] ?? 'receipt_long'}</span>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-200 truncate max-w-[180px]">{e.description}</p>
-                      <p className="text-xs text-slate-500">{e.date} · <span className="capitalize">{e.category}</span></p>
+                      <p className="text-sm text-on-surface/80 truncate max-w-[180px]">{e.description}</p>
+                      <p className="text-xs text-on-surface/40 font-body">{e.date} · <span className="capitalize">{e.category}</span></p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

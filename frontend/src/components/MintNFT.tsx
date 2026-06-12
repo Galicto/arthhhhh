@@ -34,6 +34,7 @@ const MintNFT = ({ openModal, closeModal }: MintNFTProps) => {
   const onMint = async () => {
     if (!activeAddress) return enqueueSnackbar('Connect a wallet first', { variant: 'error' })
     if (!file) return enqueueSnackbar('Select an image', { variant: 'error' })
+    if (!import.meta.env.VITE_PINATA_JWT) return enqueueSnackbar('Pinata JWT not configured. Add VITE_PINATA_JWT to your .env file.', { variant: 'error' })
 
     setLoading(true)
     try {
@@ -88,8 +89,8 @@ const MintNFT = ({ openModal, closeModal }: MintNFTProps) => {
           <input className="file-input file-input-bordered w-full" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
         </div>
         <div className="modal-action">
-          <button className={`btn bg-accent-green text-surface-base font-bold hover:bg-accent-green-dim ${loading ? 'loading' : ''}`} onClick={onMint} disabled={loading}>Mint</button>
-          <button className="btn btn-ghost text-on-surface-variant" onClick={closeModal} disabled={loading}>Close</button>
+          <button type="button" className={`btn bg-accent-green text-surface-base font-bold hover:bg-accent-green-dim ${loading ? 'loading' : ''}`} onClick={onMint} disabled={loading}>Mint</button>
+          <button type="button" className="btn btn-ghost text-on-surface-variant" onClick={closeModal} disabled={loading}>Close</button>
         </div>
       </form>
     </dialog>

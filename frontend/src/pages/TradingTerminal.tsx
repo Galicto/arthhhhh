@@ -703,7 +703,7 @@ const TradingTerminal: React.FC = () => {
                       <button
                         className={`flex-1 py-2.5 text-xs font-black rounded-full transition-all uppercase tracking-wider ${
                           orderSide === 'buy'
-                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                            ? 'bg-emerald-500 text-on-surface shadow-lg shadow-emerald-500/20'
                             : 'text-on-surface-variant hover:text-on-surface'
                         }`}
                         onClick={() => setOrderSide('buy')}
@@ -713,7 +713,7 @@ const TradingTerminal: React.FC = () => {
                       <button
                         className={`flex-1 py-2.5 text-xs font-black rounded-full transition-all uppercase tracking-wider ${
                           orderSide === 'sell'
-                            ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
+                            ? 'bg-red-500 text-on-surface shadow-lg shadow-red-500/20'
                             : 'text-on-surface-variant hover:text-on-surface'
                         }`}
                         onClick={() => setOrderSide('sell')}
@@ -802,8 +802,8 @@ const TradingTerminal: React.FC = () => {
                         !activeAddress
                           ? 'bg-surface-container-highest text-on-surface-variant cursor-not-allowed'
                           : orderSide === 'buy'
-                            ? 'bg-emerald-500 text-white hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]'
-                            : 'bg-red-500 text-white hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]'
+                            ? 'bg-emerald-500 text-on-surface hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]'
+                            : 'bg-red-500 text-on-surface hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]'
                       } ${orderLoading ? 'opacity-60 cursor-wait' : ''}`}
                       onClick={handlePlaceOrder}
                       disabled={orderLoading || !activeAddress}

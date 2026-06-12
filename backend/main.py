@@ -441,8 +441,78 @@ async def goal_planner(payload: GoalPlannerRequest):
     }
 
 
+class ExpenseImpactRequest(BaseModel):
+    expenseAmount: float
+    expenseDescription: str
+    goals: List[Dict[str, Any]] = []
+
+@app.post("/api/expense-impact")
+async def expense_impact(payload: ExpenseImpactRequest):
+    import math
+
+    amount = payload.expenseAmount
+    description = payload.expenseDescription
+    goals = payload.goals
+
+    # Build goals context for prompt
+    goals_context = "\n".join([
+        f"- {g.get('title', 'Goal')} ({g.get('category', 'General')}): "
+        f"Target INR {g.get('targetAmount', 0):,.0f}, "
+        f"Saved INR {g.get('currentSavings', 0):,.0f}, "
+        f"Deadline: {g.get('targetDate', 'N/A')}, "
+        f"Priority: {g.get('priority', 'medium')}"
+        for g in goals
+    ]) if goals else "No active goals recorded."
+
+    prompt = f"""You are a highly analytical quantitative financial advisor working in INDIA. Return a purely data-driven, numbers-heavy analysis.
+The user wants to spend INR {amount:,.0f} on "{description}".
+
+User's active goals:
+{goals_context}
+
+Your response must focus strictly on numbers, percentages, and metrics. Do NOT use long narrative text or fluff.
+1. Calculate the exact percentage impact of this INR {amount:,.0f} expense against the target amount of the highest priority goal.
+2. Estimate the mathematical delay (in weeks or months) this causes for their top goals.
+3. Show the opportunity cost: what would INR {amount:,.0f} turn into if invested at 12% APY over 5 years?
+Use bullet points. Start lines with numbers or metrics. Keep it under 150 words. Do not use markdown headers.
+All currency must be in INR. Do NOT use $, USD, EUR or any other currency."""
+
+    try:
+        if GEMINI_API_KEY:
+            model_gemini = genai.GenerativeModel("models/gemini-2.5-flash")
+            response = model_gemini.generate_content(prompt)
+            return {"analysis": sanitize_currency(response.text.strip())}
+
+        # Fallback to Ollama
+        res = ollama.chat(model="llama3.2", messages=[{"role": "user", "content": prompt}])
+        return {"analysis": sanitize_currency(res['message']['content'].strip())}
+    except Exception as e:
+        print(f"Expense Impact AI Error: {e}")
+        # Provide a mathematical fallback when no AI is available
+        opp_cost = amount * ((1 + 0.12) ** 5)
+        top_goal = goals[0] if goals else None
+        fallback_lines = [
+            f"Proposed expense: INR {amount:,.0f} on \"{description}\"",
+        ]
+        if top_goal:
+            target = float(top_goal.get('targetAmount', 0))
+            saved = float(top_goal.get('currentSavings', 0))
+            remaining = max(0, target - saved)
+            pct = (amount / target * 100) if target > 0 else 0
+            pct_remaining = (amount / remaining * 100) if remaining > 0 else 0
+            fallback_lines.append(f"Impact on \"{top_goal.get('title', 'Top Goal')}\": INR {amount:,.0f} = {pct:.1f}% of target (INR {target:,.0f})")
+            fallback_lines.append(f"Consumes {pct_remaining:.1f}% of remaining amount needed (INR {remaining:,.0f})")
+            if remaining > 0:
+                monthly_save = remaining / 24
+                delay_months = amount / monthly_save if monthly_save > 0 else 0
+                fallback_lines.append(f"Estimated delay: ~{delay_months:.1f} months on current savings pace")
+        fallback_lines.append(f"Opportunity cost: INR {amount:,.0f} invested at 12% APY for 5 years = INR {opp_cost:,.0f}")
+        fallback_lines.append(f"Net cost of spending: INR {opp_cost - amount:,.0f} in lost growth")
+
+        return {"analysis": "\n".join(fallback_lines)}
 
 
+@app.post("/api/generate-pdf")
 
 
 
