@@ -34,7 +34,19 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 
+import api_location
+import api_business
+import api_schemes
+import api_ai
+import api_finance
+
 app = FastAPI(title="Arthniti AI Expense Classifier & PDF Engine", version="1.2")
+
+app.include_router(api_location.router, prefix="/api/location", tags=["location"])
+app.include_router(api_business.router, prefix="/api/business", tags=["business"])
+app.include_router(api_schemes.router, prefix="/api/schemes", tags=["schemes"])
+app.include_router(api_finance.router, prefix="/api/finance", tags=["finance"])
+app.include_router(api_ai.router, prefix="/api/ai", tags=["ai"])
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,6 +55,92 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/api/health")
+async def health_check():
+    import datetime
+    return {
+        "status": "ok",
+        "service": "backend",
+        "lastCheckedAt": datetime.datetime.now().isoformat()
+    }
+
+@app.get("/api/ai/health")
+async def ai_health_check():
+    """Validate Gemini config + reachability. Never expose secrets."""
+    import concurrent.futures
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(api_ai.probe_gemini)
+            result = future.result(timeout=18)
+    except concurrent.futures.TimeoutError:
+        import datetime
+        result = {
+            "status": "unavailable",
+            "provider": "gemini",
+            "safeMessage": "AI service is unavailable. Retry after the service is restored.",
+            "lastCheckedAt": datetime.datetime.now().isoformat(),
+        }
+    except Exception as e:
+        import datetime
+        print(f"AI health endpoint error: {type(e).__name__}")
+        result = {
+            "status": "unavailable",
+            "provider": "gemini",
+            "safeMessage": "AI service is unavailable. Retry after the service is restored.",
+            "lastCheckedAt": datetime.datetime.now().isoformat(),
+        }
+    # Alias for older clients
+    result["message"] = result.get("safeMessage", "")
+    return result
+
+@app.get("/api/providers/health")
+async def providers_health():
+    import datetime
+    import os
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    maps_key = (os.getenv("GOOGLE_MAPS_API_KEY") or "").strip()
+    ts = datetime.datetime.now().isoformat()
+    ai_status = "connected" if (gemini_key and len(gemini_key) > 10) else "not_configured"
+    # Prefer cached probe if available
+    cached = getattr(api_ai, "_last_ai_health", None) or {}
+    if cached.get("status"):
+        ai_status = cached["status"]
+    return {
+        "ai": {
+            "status": ai_status,
+            "provider": "gemini",
+            "lastCheckedAt": cached.get("lastCheckedAt") or ts,
+            "safeMessage": cached.get("safeMessage") or "",
+        },
+        "geocoding": {
+            "status": "connected",
+            "provider": "OpenStreetMap Nominatim",
+            "lastCheckedAt": ts
+        },
+        "business": {
+            "status": "connected" if maps_key else "fallback_osm",
+            "provider": "Google Places API" if maps_key else "OpenStreetMap Overpass API",
+            "mapsKeyConfigured": bool(maps_key),
+            "lastCheckedAt": ts
+        },
+        "schemes": {
+            "status": "connected",
+            "provider": "Official curated scheme rules (mudra.org.in, pmvishwakarma.gov.in)",
+            "lastCheckedAt": ts
+        },
+        "jobs": {
+            "status": "not_configured",
+            "provider": "none",
+            "safeMessage": "Live job listings are not connected. Arthniti is currently showing business opportunities based on local market signals.",
+            "lastCheckedAt": ts
+        },
+        "datasets": {
+            "status": "connected",
+            "provider": "Arthniti Finance Engine",
+            "lastCheckedAt": ts
+        }
+    }
 
 # -------------------------------------------------------------
 # 1. SETUP CLASSIFIER MODEL
@@ -651,6 +749,20 @@ async def generate_pdf(payload: PdfRequestPayload):
 
     doc.build(story)
     return FileResponse(pdf_path, filename="Arthniti_Behavioral_Report.pdf", media_type="application/pdf")
+
+@app.on_event("startup")
+async def validate_ai_config_on_startup():
+    """Validate AI provider configuration at boot — never print secrets."""
+    key = os.getenv("GEMINI_API_KEY")
+    model = os.getenv("GEMINI_MODEL", "models/gemini-2.5-flash")
+    if not key or len(key.strip()) < 10:
+        print("[startup] AI provider: NOT CONFIGURED (GEMINI_API_KEY missing)")
+    else:
+        print(f"[startup] AI provider: gemini configured (model={model}, key_len={len(key)})")
+    maps = (os.getenv("GOOGLE_MAPS_API_KEY") or "").strip()
+    print(f"[startup] Maps/Places: {'configured' if maps else 'not configured — using OSM Overpass'}")
+    print("[startup] Jobs provider: not configured — business signals only")
+
 
 if __name__ == "__main__":
     import uvicorn

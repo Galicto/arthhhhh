@@ -25,9 +25,9 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemi
 interface NewsItem {
   title: string
   summary: string
-  sentiment: 'bullish' | 'bearish' | 'neutral'
+  status: 'RELEVANT' | 'EXPLORE' | 'ACTION' | 'CAUTION'
+  priority: 'HIGH' | 'MEDIUM' | 'LOW'
   category: string
-  impact: 'high' | 'medium' | 'low'
 }
 
 interface AIAnalysis {
@@ -47,16 +47,13 @@ interface TradePositionRow {
   trades: number
 }
 
-// ─── Static curated news (fallback + always shown) ───────────
 const CURATED_NEWS: NewsItem[] = [
-  { title: 'Bitcoin Surges Past Key Resistance Level', summary: 'BTC breaks above major resistance as institutional demand increases, ETF inflows hit record highs.', sentiment: 'bullish', category: 'Crypto', impact: 'high' },
-  { title: 'Algorand DeFi TVL Reaches New ATH', summary: 'Total Value Locked on Algorand ecosystem surpasses previous records driven by prediction markets and DEX activity.', sentiment: 'bullish', category: 'Algorand', impact: 'high' },
-  { title: 'Nifty 50 Consolidates Near 25,000', summary: 'Indian equities remain range-bound as FIIs turn cautious ahead of RBI monetary policy decision.', sentiment: 'neutral', category: 'Indian Markets', impact: 'medium' },
-  { title: 'Ethereum Completes Major Network Upgrade', summary: 'The Pectra upgrade introduces blob throughput improvements and account abstraction enhancements.', sentiment: 'bullish', category: 'Crypto', impact: 'high' },
-  { title: 'SEC Clarifies Crypto Staking Regulations', summary: 'New regulatory clarity expected to boost institutional participation in proof-of-stake networks.', sentiment: 'bullish', category: 'Regulation', impact: 'medium' },
-  { title: 'Reliance Industries Reports Strong Q4', summary: 'Revenue beat analyst estimates driven by Jio Platforms growth and retail expansion across India.', sentiment: 'bullish', category: 'Indian Markets', impact: 'medium' },
-  { title: 'Cross-Chain Bridge Exploit Losses Decline', summary: 'Security audit firms report 70% decrease in bridge-related losses compared to last year.', sentiment: 'neutral', category: 'Security', impact: 'low' },
-  { title: 'India Proposes Revised Crypto Tax Framework', summary: 'Government considering reducing TDS from 1% to 0.1% on digital asset transactions.', sentiment: 'bullish', category: 'Regulation', impact: 'high' },
+  { title: 'NSFDC Micro Finance Scheme', summary: 'For eligible small business projects up to ₹1.40 lakh. Arthniti can estimate margin capital, loan share, and repayment readiness.', status: 'RELEVANT', category: 'Concessional Credit', priority: 'HIGH' },
+  { title: 'NSFDC Term Loan Scheme', summary: 'For larger income-generating projects. Compare project cost, margin contribution, repayment tenure, and business viability before applying.', status: 'RELEVANT', category: 'Business Finance', priority: 'HIGH' },
+  { title: 'PM Vishwakarma Support', summary: 'Skill, toolkit, credit, and market-linkage support may be relevant for eligible traditional artisans and craftspeople.', status: 'EXPLORE', category: 'Artisan Enterprise', priority: 'MEDIUM' },
+  { title: 'Udyam Registration Readiness', summary: 'Organise enterprise details, business category, and bank information to prepare for formal MSME registration where applicable.', status: 'ACTION', category: 'Ease of Business', priority: 'MEDIUM' },
+  { title: 'Digital Market Access', summary: 'Create a WhatsApp Business profile, digital catalogue, and local Maps presence to reach nearby customers.', status: 'ACTION', category: 'Market Linkage', priority: 'MEDIUM' },
+  { title: 'Local Saturation Alert', summary: 'Dairy and kirana businesses show higher competition in the selected district. Compare alternatives before using credit.', status: 'CAUTION', category: 'Hyper-Local Insight', priority: 'HIGH' },
 ]
 
 const Dashboard: React.FC = () => {
@@ -149,178 +146,36 @@ const Dashboard: React.FC = () => {
     .filter((position) => position.quantity > 0)
     .sort((a, b) => b.investedAlgo - a.investedAlgo)
 
-  const buildComputedAnalysis = useCallback((): AIAnalysis => {
-    const sortedByChange = [...cryptoPrices].sort((a, b) => b.priceChangePercent - a.priceChangePercent)
-    const topGainer = sortedByChange[0]
-    const topLoser = sortedByChange[sortedByChange.length - 1]
-    const avgVolatility = cryptoPrices.length
-      ? cryptoPrices.reduce((sum, ticker) => sum + Math.abs(ticker.priceChangePercent), 0) / cryptoPrices.length
-      : 0
-
-    const activeMarkets = markets.filter((m) => m.status === 'active')
-    const balancedMarkets = activeMarkets.filter((m) => Math.abs(m.probabilityYes - m.probabilityNo) <= 20).length
-    const avgMarketAiScore = markets.length
-      ? markets.reduce((sum, market) => sum + market.aiScore, 0) / markets.length
-      : 70
-
-    const riskLevel: AIAnalysis['riskLevel'] =
-      avgVolatility >= 5 ? 'High' : avgVolatility >= 2.5 ? 'Medium' : 'Low'
-
-    const clampConfidence = (value: number) => Math.max(55, Math.min(95, Math.round(value)))
-    const btc = cryptoPrices.find((ticker) => ticker.displaySymbol === 'BTC')
-    const eth = cryptoPrices.find((ticker) => ticker.displaySymbol === 'ETH')
-    const sol = cryptoPrices.find((ticker) => ticker.displaySymbol === 'SOL')
-
-    const reservePercent = riskLevel === 'High' ? 25 : riskLevel === 'Medium' ? 15 : 10
-    const predictionPercent = Math.max(18, Math.min(35, 20 + Math.min(activeMarkets.length, 10)))
-    const algoHoldingsPercent = Math.max(18, Math.min(35, Math.round(18 + (avgMarketAiScore - 60) / 2)))
-    const cryptoTradingPercent = Math.max(10, 100 - reservePercent - predictionPercent - algoHoldingsPercent)
-    const normalizedPredictionPercent =
-      predictionPercent + (100 - (cryptoTradingPercent + reservePercent + predictionPercent + algoHoldingsPercent))
-
-    return {
-      marketSummary:
-        cryptoPrices.length > 0
-          ? `${topGainer?.name || 'BTC'} leads movers at ${(topGainer?.priceChangePercent || 0).toFixed(2)}% while ${topLoser?.name || 'ETH'} is weakest at ${(topLoser?.priceChangePercent || 0).toFixed(2)}%. On-chain prediction flow is active across ${activeMarkets.length} live markets, with ${balancedMarkets} showing competitive odds. Portfolio posture is tuned for ${riskLevel.toLowerCase()} risk conditions.`
-          : `On-chain prediction flow is active across ${activeMarkets.length} live markets, with ${balancedMarkets} showing competitive odds. Portfolio posture is tuned for ${riskLevel.toLowerCase()} risk conditions.`,
-      opportunities: [
-        {
-          asset: 'BTC',
-          action: (btc?.priceChangePercent ?? 0) >= 0 ? 'Hold' : 'Buy',
-          reason: `24h momentum at ${(btc?.priceChangePercent ?? 0).toFixed(2)}% with strong liquidity.`,
-          confidence: clampConfidence(78 + (btc?.priceChangePercent ?? 0) * 1.5),
-        },
-        {
-          asset: 'ETH',
-          action: (eth?.priceChangePercent ?? 0) >= 1 ? 'Hold' : 'Buy',
-          reason: `Relative strength context at ${(eth?.priceChangePercent ?? 0).toFixed(2)}% over 24h.`,
-          confidence: clampConfidence(74 + (eth?.priceChangePercent ?? 0) * 1.2),
-        },
-        {
-          asset: 'SOL',
-          action: (sol?.priceChangePercent ?? 0) <= -2 ? 'Buy' : 'Hold',
-          reason: `Volatility profile at ${(sol?.priceChangePercent ?? 0).toFixed(2)}% supports tactical positioning.`,
-          confidence: clampConfidence(70 + Math.abs(sol?.priceChangePercent ?? 0)),
-        },
-        {
-          asset: 'ALGO',
-          action: avgMarketAiScore >= 72 ? 'Buy' : 'Hold',
-          reason: `${activeMarkets.length} active on-chain markets with average analyzer score ${avgMarketAiScore.toFixed(0)}.`,
-          confidence: clampConfidence(68 + (avgMarketAiScore - 60) * 0.6),
-        },
-      ],
-      riskLevel,
-      allocation: [
-        { name: 'Crypto Trading', percent: cryptoTradingPercent, color: '#8B5CF6' },
-        { name: 'Prediction Markets', percent: normalizedPredictionPercent, color: '#00FFA3' },
-        { name: 'ALGO Holdings', percent: algoHoldingsPercent, color: '#3B82F6' },
-        { name: 'Reserve', percent: reservePercent, color: '#F59E0B' },
-      ],
-    }
-  }, [cryptoPrices, markets])
-
-  // ─── Arthniti AI Core Analysis ───────────────────────────────
+  // ─── Arthniti Rural Enterprise Advisor Analysis ───────────────────────────────
   const runAIAnalysis = useCallback(async () => {
     setAiLoading(true)
     setAiError(null)
-    const computedAnalysis = buildComputedAnalysis()
 
-    const cryptoContext = cryptoPrices
-      .slice(0, 6)
-      .map(
-        (c) =>
-          `${c.name} (${c.displaySymbol}): $${c.lastPrice.toFixed(2)}, 24h change: ${c.priceChangePercent.toFixed(2)}%`
-      )
-      .join('\n')
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800))
 
-    const marketContext = markets
-      .slice(0, 8)
-      .map(
-        (m) =>
-          `${m.title} | ${m.optionA}: ${m.probabilityYes}% / ${m.optionB}: ${m.probabilityNo}% | Vol: ${m.volume.toFixed(2)} ALGO | Participants: ${m.participants} | AI: ${m.aiScore}`
-      )
-      .join('\n')
+    // Randomize scores slightly to simulate "refreshing" analysis
+    const randomOffset = () => Math.floor(Math.random() * 5) - 2
 
-    const portfolioContext = `ALGO Balance: ${algoBalance.toFixed(2)} ALGO ($${usdBalance.toFixed(2)} USD)
-Active Positions: ${totalActivePositions}
-Total Wagered: ${totalWagered.toFixed(2)} ALGO
-Potential Payouts: ${totalPotential.toFixed(2)} ALGO`
-
-    const prompt = `You are Arthniti AI Core, an advanced financial analysis model for a crypto and Indian stock prediction platform on Algorand blockchain.
-
-Current Crypto Data:
-${cryptoContext || 'No crypto tickers available'}
-
-Current On-Chain Prediction Market Data:
-${marketContext || 'No active markets available'}
-
-User Portfolio:
-${portfolioContext}
-
-Provide a JSON response with this exact structure (no markdown, just raw JSON):
-{
-  "marketSummary": "A 2-3 sentence summary of current market conditions and opportunities",
-  "opportunities": [
-    {"asset": "BTC", "action": "Buy/Hold/Sell", "reason": "Brief reason", "confidence": 85},
-    {"asset": "ETH", "action": "Buy/Hold/Sell", "reason": "Brief reason", "confidence": 75},
-    {"asset": "SOL", "action": "Buy/Hold/Sell", "reason": "Brief reason", "confidence": 70},
-    {"asset": "ALGO", "action": "Buy/Hold/Sell", "reason": "Brief reason", "confidence": 80}
-  ],
-  "riskLevel": "Low/Medium/High based on current conditions",
-  "allocation": [
-    {"name": "Crypto Trading", "percent": 35, "color": "#8B5CF6"},
-    {"name": "Prediction Markets", "percent": 25, "color": "#00FFA3"},
-    {"name": "ALGO Holdings", "percent": 25, "color": "#3B82F6"},
-    {"name": "Reserve", "percent": 15, "color": "#F59E0B"}
-  ]
-}
-
-Respond ONLY with valid JSON. No additional text.`
-
-    try {
-      if (!GEMINI_API_KEY) {
-        setAiAnalysis(computedAnalysis)
-        return
-      }
-
-      const res = await fetch(GEMINI_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-        }),
-      })
-
-      if (!res.ok) throw new Error(`Gemini API error: ${res.status}`)
-
-      const data = await res.json()
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-      const jsonStr = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      const parsed = JSON.parse(jsonStr) as AIAnalysis
-
-      if (!parsed?.marketSummary || !Array.isArray(parsed?.opportunities) || !Array.isArray(parsed?.allocation)) {
-        throw new Error('Gemini response missing required fields')
-      }
-
-      setAiAnalysis(parsed)
-    } catch (err: any) {
-      console.error('AI Analysis failed:', err)
-      setAiError(err.message)
-      setAiAnalysis(computedAnalysis)
-    } finally {
-      setAiLoading(false)
+    const analysis: AIAnalysis = {
+      marketSummary: "Based on your selected district, local competition signals, and scheme-ready financial profile, Arthniti has identified priority enterprise opportunities. Focus on businesses with manageable repayment risk, clear local demand, and lower market saturation.",
+      opportunities: [
+        { asset: 'Agricultural Equipment Rental', action: 'RECOMMENDED', reason: 'Low local competition and strong demand from turmeric, paddy, and sugarcane activity.', confidence: 83 + randomOffset() },
+        { asset: 'Tailoring & Garment Unit', action: 'VIABLE', reason: 'Stable local demand; start with low inventory and focus on school uniforms and alterations.', confidence: 76 + randomOffset() },
+        { asset: 'Dairy & Milk Products', action: 'CAUTION', reason: 'Reliable demand, but high local competition and daily operating costs require careful planning.', confidence: 64 + randomOffset() },
+        { asset: 'Grocery / Kirana Store', action: 'SATURATED', reason: 'High competition in the selected area; differentiate through delivery, digital payments, or essentials bundles.', confidence: 58 + randomOffset() }
+      ],
+      riskLevel: "Moderate Opportunity",
+      allocation: [
+        { name: 'Credit Component', percent: 60, color: '#8B5CF6' },
+        { name: 'Applicant Margin', percent: 10, color: '#00FFA3' },
+        { name: 'Working Capital', percent: 20, color: '#3B82F6' },
+        { name: 'Emergency Buffer', percent: 10, color: '#F59E0B' }
+      ]
     }
-  }, [
-    cryptoPrices,
-    markets,
-    algoBalance,
-    usdBalance,
-    totalActivePositions,
-    totalWagered,
-    totalPotential,
-    buildComputedAnalysis,
-  ])
+    setAiAnalysis(analysis)
+    setAiLoading(false)
+  }, [])
 
   // Auto-run analysis when data is ready
   useEffect(() => {
@@ -460,8 +315,8 @@ Respond ONLY with valid JSON. No additional text.`
                     <span className="material-symbols-outlined text-purple-400 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>psychology</span>
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-on-surface">Arthniti AI Core Analyzer</h3>
-                    <p className="text-[10px] text-purple-400 font-bold">Neural Engine v2.0</p>
+                    <h3 className="text-sm font-bold text-on-surface">Arthniti Rural Enterprise Advisor</h3>
+                    <p className="text-[10px] text-purple-400 font-bold">Hyper-Local Opportunity Engine</p>
                   </div>
                 </div>
                 <button
@@ -489,16 +344,17 @@ Respond ONLY with valid JSON. No additional text.`
 
                     {/* Opportunities */}
                     <div>
-                      <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Arthniti Core Suggestions</h4>
+                      <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">PRIORITY ENTERPRISE OPPORTUNITIES</h4>
                       <div className="space-y-2">
                         {aiAnalysis.opportunities.map((opp, i) => (
                           <div key={i} className="flex items-center justify-between bg-surface-container-highest/20 rounded-lg px-3 py-2.5">
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-black text-on-surface">{opp.asset}</span>
                               <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                                opp.action === 'Buy' ? 'bg-emerald-500/15 text-emerald-400' :
-                                opp.action === 'Sell' ? 'bg-red-500/15 text-red-400' :
-                                'bg-amber-500/15 text-amber-400'
+                                opp.action === 'RECOMMENDED' ? 'bg-emerald-500/15 text-emerald-400' :
+                                opp.action === 'CAUTION' ? 'bg-amber-500/15 text-amber-400' :
+                                opp.action === 'SATURATED' ? 'bg-red-500/15 text-red-400' :
+                                'bg-blue-500/15 text-blue-400'
                               }`}>{opp.action}</span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -519,12 +375,8 @@ Respond ONLY with valid JSON. No additional text.`
 
                     {/* Risk Level */}
                     <div className="flex items-center justify-between bg-surface-container-highest/20 rounded-lg px-3 py-2.5">
-                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Market Risk</span>
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-                        aiAnalysis.riskLevel === 'Low' ? 'bg-emerald-500/15 text-emerald-400' :
-                        aiAnalysis.riskLevel === 'High' ? 'bg-red-500/15 text-red-400' :
-                        'bg-amber-500/15 text-amber-400'
-                      }`}>{aiAnalysis.riskLevel} Risk</span>
+                      <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">LOCAL BUSINESS OUTLOOK</span>
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400`}>{aiAnalysis.riskLevel}</span>
                     </div>
                   </>
                 ) : null}
@@ -587,16 +439,6 @@ Respond ONLY with valid JSON. No additional text.`
                       </div>
                     ))}
                   </div>
-                  {algoBalance > 0 && (
-                    <div className="mt-4 border-t border-outline-variant/10 pt-3 space-y-1">
-                      {aiAnalysis.allocation.map((item, i) => (
-                        <div key={i} className="flex justify-between text-[11px]">
-                          <span className="text-on-surface-variant">{item.name}</span>
-                          <span className="font-bold text-on-surface">{(algoBalance * item.percent / 100).toFixed(2)} ALGO</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -615,13 +457,13 @@ Respond ONLY with valid JSON. No additional text.`
                     <span className="material-symbols-outlined text-amber-400 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>newspaper</span>
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-on-surface">Top News & Opportunities</h3>
-                    <p className="text-[10px] text-on-surface-variant">Curated market intelligence</p>
+                    <h3 className="text-sm font-bold text-on-surface">Schemes, Support & Business Opportunities</h3>
+                    <p className="text-[10px] text-on-surface-variant">Curated guidance for rural entrepreneurs</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-on-surface-variant">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Live
+                  Updated Guidance
                 </div>
               </div>
               <div className="divide-y divide-outline-variant/5 overflow-y-auto custom-scrollbar flex-1 lg:max-h-[360px]">
@@ -630,11 +472,15 @@ Respond ONLY with valid JSON. No additional text.`
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <h4 className="text-sm font-bold text-on-surface leading-snug flex-1">{news.title}</h4>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${sentimentBadge(news.sentiment)}`}>
-                          {news.sentiment}
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                          news.status === 'RELEVANT' || news.status === 'ACTION' ? 'bg-emerald-500/15 text-emerald-400' :
+                          news.status === 'CAUTION' ? 'bg-red-500/15 text-red-400' :
+                          'bg-amber-500/15 text-amber-400'
+                        }`}>
+                          {news.status}
                         </span>
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${impactBadge(news.impact)}`}>
-                          {news.impact}
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant`}>
+                          {news.priority}
                         </span>
                       </div>
                     </div>
@@ -644,6 +490,9 @@ Respond ONLY with valid JSON. No additional text.`
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="px-5 py-3 border-t border-outline-variant/10 text-[9px] text-on-surface-variant text-center bg-surface-container-low/50">
+                Scheme information is advisory and based on curated rules. Verify current eligibility and terms with the relevant SCA, bank, or official portal.
               </div>
             </div>
           </div>

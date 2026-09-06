@@ -16,6 +16,14 @@ import Education from './Education';
 import Goals from './Goals';
 import Transactions from './Transactions';
 import WealthOverview from './WealthOverview';
+// ── Arthniti pages ────────────────────────────────────────────────────────────
+import BusinessAdvisory from './BusinessAdvisory';
+import FeasibilityReport from './FeasibilityReport';
+import FinancialPlan from './FinancialPlan';
+import ArthnitiChat from './ArthnitiChat';
+import BusinessComparison from './BusinessComparison';
+import ExploreBusinesses from './ExploreBusinesses';
+import LocalOpportunities from './LocalOpportunities';
 
 // Pages that can be accessed without a wallet (public pages)
 const PUBLIC_PAGES = new Set(['home', 'markets', 'leaderboard', 'education', 'support']);
@@ -68,9 +76,25 @@ const AppRouter: React.FC = () => {
       return <Goals />;
     case 'transactions':
       return <Transactions />;
+    // ── Arthniti pages ────────────────────────────────────────────────────────
+    case 'advisory':
+      return <BusinessAdvisory />;
+    case 'opportunities':
+      return <LocalOpportunities />;
+    case 'feasibility':
+      return <FeasibilityReport />;
+    case 'financial-plan':
+      return <FinancialPlan />;
+    case 'arthniti-chat':
+      return <ArthnitiChat />;
+    case 'compare':
+      return <BusinessComparison />;
+    case 'explore':
+      return <ExploreBusinesses />;
     default:
       return <Home />;
   }
 };
 
 export default AppRouter;
+

@@ -15,7 +15,8 @@ function loadGoals(): FinancialGoal[] {
 
 export default function ExpenseImpactAgent() {
   const [expenseAmount, setExpenseAmount] = useState<string>('');
-  const [expenseDescription, setExpenseDescription] = useState<string>('');
+  const [expensePurpose, setExpensePurpose] = useState<string>('');
+  const [expenseType, setExpenseType] = useState<string>('Business asset');
   
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
@@ -45,22 +46,33 @@ export default function ExpenseImpactAgent() {
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!expenseAmount || !expenseDescription) return;
+    if (!expenseAmount || !expensePurpose) return;
 
     setLoading(true);
     setError(null);
     setAnalysis(null);
 
-    const goals = loadGoals();
-
     try {
-      const response = await fetch(`${API_BASE_URL}/api/expense-impact`, {
+      const profileRaw = sessionStorage.getItem('arthniti-profile');
+      const businessRaw = sessionStorage.getItem('arthniti-selected-business');
+      
+      if (!profileRaw || !businessRaw) {
+        throw new Error('Create a business plan first to analyse budget impact.');
+      }
+
+      const profile = JSON.parse(profileRaw);
+      const business = JSON.parse(businessRaw);
+
+      const response = await fetch(`${API_BASE_URL}/api/finance/budget-impact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           expenseAmount: parseFloat(expenseAmount),
-          expenseDescription,
-          goals,
+          expensePurpose,
+          expenseType,
+          marginCapital: profile.marginCapital || 0,
+          avgRevenue: business.avgRevenue || 0,
+          avgOperatingCost: business.avgOperatingCost || 0
         }),
       });
 
@@ -87,8 +99,8 @@ export default function ExpenseImpactAgent() {
           <span className="material-symbols-outlined text-emerald-400 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance_wallet</span>
         </div>
         <div>
-          <h3 className="text-sm font-bold text-on-surface">Expense Impact Agent</h3>
-          <p className="text-[10px] text-emerald-400 font-bold">Goal Evaluator | Local AI</p>
+          <h3 className="text-sm font-bold text-on-surface">Business Budget Impact</h3>
+          <p className="text-[10px] text-emerald-400 font-bold">Capital & Working-Capital Advisor</p>
         </div>
       </div>
 
@@ -111,16 +123,30 @@ export default function ExpenseImpactAgent() {
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase font-bold tracking-wider text-on-surface-variant mb-1.5">Description</label>
+              <label className="block text-[10px] uppercase font-bold tracking-wider text-on-surface-variant mb-1.5">Purpose</label>
               <input
                 type="text"
                 required
-                value={expenseDescription}
-                onChange={e => setExpenseDescription(e.target.value)}
-                placeholder="e.g. New iPhone"
+                value={expensePurpose}
+                onChange={e => setExpensePurpose(e.target.value)}
+                placeholder="e.g. New Equipment"
                 className="w-full bg-[#0E1117] border border-on-surface/10 rounded-xl px-3 py-2 text-sm text-on-surface placeholder:text-slate-600 focus:outline-none focus:border-[#2962FF] transition-colors"
               />
             </div>
+          </div>
+          <div>
+             <label className="block text-[10px] uppercase font-bold tracking-wider text-on-surface-variant mb-1.5">Expense Type</label>
+             <select
+               value={expenseType}
+               onChange={e => setExpenseType(e.target.value)}
+               className="w-full bg-[#0E1117] border border-on-surface/10 rounded-xl px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-[#2962FF] transition-colors cursor-pointer"
+             >
+               <option value="Business asset">Business asset</option>
+               <option value="Working capital">Working capital</option>
+               <option value="Land/space preparation">Land/space preparation</option>
+               <option value="Equipment maintenance">Equipment maintenance</option>
+               <option value="Personal expense">Personal expense</option>
+             </select>
           </div>
           <button
             type="submit"

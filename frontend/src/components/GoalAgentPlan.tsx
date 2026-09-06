@@ -2,8 +2,15 @@ import React, { useState } from 'react';
 import type { FinancialGoal } from '../types/wealthTypes';
 import { API_BASE_URL } from '../config';
 
-const inr = (n: number) =>
-  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+const inr = (n: number | undefined | null) => {
+  if (n == null || isNaN(n) || !isFinite(n)) return '—';
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
+};
+
+const formatMonths = (m: number | undefined | null) => {
+  if (m == null || isNaN(m) || !isFinite(m)) return '—';
+  return `${m} mo`;
+};
 
 interface Instrument {
   name: string;
@@ -70,6 +77,15 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
   const [riskTolerance, setRiskTolerance] = useState<'low' | 'medium' | 'high' | 'all'>('all');
 
   const analyze = async () => {
+    if (!goal || !goal.targetAmount || isNaN(goal.targetAmount) || goal.targetAmount <= 0) {
+      setError('Add a target amount to calculate your monthly requirement.');
+      return;
+    }
+    if (!goal.targetDate || isNaN(new Date(goal.targetDate).getTime())) {
+      setError('Choose a target date to calculate duration.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -88,6 +104,15 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
       setLoading(false);
     }
   };
+
+  if (!goal || !goal.targetAmount || isNaN(goal.targetAmount) || goal.targetAmount <= 0) {
+    return (
+      <div className="mt-4 bg-[#0E1117] border border-on-surface/10 rounded-xl p-5 text-center opacity-70">
+        <span className="material-symbols-outlined text-3xl mb-2 text-on-surface/40">savings</span>
+        <p className="text-xs text-on-surface/60 font-body">Set up a business capital goal to see your savings plan.</p>
+      </div>
+    );
+  }
 
   // ── Trigger button (before analysis) ──────────────────────────────────────
   if (!result && !loading && !error) {
@@ -108,7 +133,7 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
           className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-[#2962FF] to-[#5B89FF] hover:from-[#2255DD] hover:to-[#4a78ee] text-on-surface text-xs font-semibold rounded-lg transition-all shadow-lg shadow-[#2962FF]/20"
         >
           <span className="material-symbols-outlined text-sm">auto_awesome</span>
-          AI Goal Plan
+          Enterprise Savings & Capital Plan
         </button>
       </div>
     );
@@ -152,7 +177,7 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-[#2962FF] text-lg">auto_awesome</span>
-          <h4 className="font-bold font-headline text-on-surface tracking-tight text-sm">AI Investment Plan</h4>
+          <h4 className="font-bold font-headline text-on-surface tracking-tight text-sm">Enterprise Savings & Capital Plan</h4>
           <span className="text-[9px] bg-[#2962FF]/20 text-[#2962FF] border border-[#2962FF]/30 px-1.5 py-0.5 rounded font-bold tracking-wider">BETA</span>
         </div>
         <div className="flex items-center gap-2">
@@ -177,7 +202,7 @@ export default function GoalAgentPlan({ goal, monthlyIncome, monthlyExpenses }: 
           { label: 'Target', value: inr(result.goal_amount), color: 'text-on-surface' },
           { label: 'Still Need', value: inr(result.amount_needed), color: 'text-[#EF4444]' },
           { label: 'Disposable', value: inr(result.disposable), color: 'text-[#22C55E]' },
-          { label: 'Duration', value: `${result.duration_months} mo`, color: 'text-[#2962FF]' },
+          { label: 'Duration', value: formatMonths(result.duration_months), color: 'text-[#2962FF]' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-on-surface/5 backdrop-blur-xl rounded-lg p-2.5 text-center border border-on-surface/10">
             <p className="text-[10px] text-on-surface/40 font-body uppercase tracking-wider">{label}</p>

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@txnlab/use-wallet-react';
 import { ellipseAddress } from '../utils/ellipseAddress';
 import { usePredX } from '../context/PredXContext';
 import ConnectWallet from './ConnectWallet';
+import { useLanguage } from '../lib/i18n';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -12,14 +13,31 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { activeAddress } = useWallet();
   const { currentPage, navigate, themeMode, setThemeMode } = usePredX();
   const [openWalletModal, setOpenWalletModal] = useState<boolean>(false);
+  const { t, toggleLang } = useLanguage();
 
   const toggleWalletModal = () => setOpenWalletModal(!openWalletModal);
 
   const isConnected = !!activeAddress;
 
+  // Prevent auto-open wallet on advisory routes
+  useEffect(() => {
+    if (['advisory', 'feasibility', 'financial-plan', 'arthniti-chat', 'compare'].includes(currentPage)) {
+      setOpenWalletModal(false);
+    }
+  }, [currentPage]);
+
   const navItems = [
     { id: 'home', label: 'Home', icon: 'home' },
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', fill: true },
+  ];
+
+  const arthnitiItems = [
+    { id: 'advisory', label: t('nav.advisory'), icon: 'business_center' },
+    { id: 'opportunities', label: 'Local Opportunities', icon: 'work' },
+    { id: 'compare', label: t('nav.compare'), icon: 'compare_arrows' },
+    { id: 'feasibility', label: t('nav.feasibility'), icon: 'assessment' },
+    { id: 'financial-plan', label: t('nav.financialPlan'), icon: 'calculate' },
+    { id: 'arthniti-chat', label: t('nav.chat'), icon: 'smart_toy' },
   ];
 
   const tradingItems = [
@@ -125,6 +143,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </div>
           )}
           
+          <button
+            onClick={toggleLang}
+            className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all backdrop-blur-md ${themeMode === 'light' ? 'bg-surface-container border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface' : 'bg-on-surface/5 border-on-surface/10 text-on-surface/70 hover:bg-on-surface/10 hover:border-on-surface/20 hover:text-on-surface'}`}
+            title="Switch Language"
+          >
+            <span className="material-symbols-outlined text-[20px]">translate</span>
+          </button>
           <button 
             onClick={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
             className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all backdrop-blur-md ${themeMode === 'light' ? 'bg-surface-container border-outline-variant/30 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface' : 'bg-on-surface/5 border-on-surface/10 text-on-surface/70 hover:bg-on-surface/10 hover:border-on-surface/20 hover:text-on-surface'}`}
@@ -159,6 +184,26 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               <span className="material-symbols-outlined" style={item.fill && currentPage === item.id ? { fontVariationSettings: "'FILL' 1" } : {}}>
                 {item.icon}
               </span> 
+              {item.label}
+            </a>
+          ))}
+        </div>
+
+        {/* Arthniti Section */}
+        <div className="space-y-1 mt-4">
+          <div className="px-4 py-2 text-[10px] uppercase tracking-widest text-on-surface-variant font-bold opacity-50">{t('nav.arthniti')}</div>
+          {arthnitiItems.map(item => (
+            <a
+              key={item.id}
+              className={currentPage === item.id
+                ? sideItemActiveClass
+                : sideItemClass
+              }
+              onClick={() => navigate(item.id)}
+            >
+              <span className="material-symbols-outlined" style={currentPage === item.id ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                {item.icon}
+              </span>
               {item.label}
             </a>
           ))}

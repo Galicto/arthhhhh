@@ -189,6 +189,8 @@ export const PredXProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       'home','dashboard','markets','leaderboard','terminal','settings','screener','trade','support',
       // Finance pages
       'analysis','wealth','education','goals','transactions',
+      // Arthniti pages
+      'advisory','feasibility','financial-plan','arthniti-chat',
     ];
     return validPages.includes(hash) ? hash : 'home';
   };
