@@ -3,6 +3,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { usePredX } from '../context/PredXContext';
 import { useLanguage } from '../lib/i18n';
 import SchemeMatcher from '../components/SchemeMatcher';
+import PanelErrorBoundary from '../components/PanelErrorBoundary';
 import { calculateFinancials } from '../lib/financialCalculator';
 import { BusinessItem } from '../providers/types';
 import { API_BASE_URL } from '../config';
@@ -236,18 +237,20 @@ export default function BusinessComparison() {
                   )}
 
                   <div className="mt-4 pt-4 border-t border-outline-variant/10">
-                    <SchemeMatcher
-                      profile={{
-                        state: profile.location.state,
-                        category: cat.category,
-                        projectCost: (cat.maxCapital || cat.minCapital || cat.avgOperatingCost * 6),
-                        marginCapital: profile.marginCapital,
-                        socialCategory: profile.socialCategory,
-                        gender: profile.gender,
-                        isArtisan: profile.isArtisan,
-                        isExistingEnterprise: false,
-                      }}
-                    />
+                    <PanelErrorBoundary fallbackMessage="Scheme Matcher could not load for this business.">
+                      <SchemeMatcher
+                        profile={{
+                          state: profile.location.state,
+                          category: cat.category,
+                          projectCost: (cat.maxCapital || cat.minCapital || cat.avgOperatingCost * 6),
+                          marginCapital: profile.marginCapital,
+                          socialCategory: profile.socialCategory,
+                          gender: profile.gender,
+                          isArtisan: profile.isArtisan,
+                          isExistingEnterprise: false,
+                        }}
+                      />
+                    </PanelErrorBoundary>
                   </div>
                 </div>
 

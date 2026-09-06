@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from typing import Optional
 import datetime
 import requests
+import asyncio
 
 router = APIRouter()
 
@@ -89,7 +90,7 @@ async def get_location_profile(
     coords_lng = lng
 
     if lat is not None and lng is not None:
-        geo = _nominatim_reverse(lat, lng)
+        geo = await asyncio.to_thread(_nominatim_reverse, lat, lng)
         if geo:
             resolved_state = geo["state"] or resolved_state
             resolved_district = geo["district"] or resolved_district
@@ -119,7 +120,7 @@ async def get_location_profile(
             source = "Known place centroid + OpenStreetMap"
         else:
             query = ", ".join([p for p in [cityOrVillage, district, state, "India"] if p])
-            fwd = _nominatim_forward(query)
+            fwd = await asyncio.to_thread(_nominatim_forward, query)
             if fwd:
                 coords_lat, coords_lng = fwd
                 confidence = "high"

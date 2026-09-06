@@ -57,7 +57,9 @@ export default function ExpenseImpactAgent() {
       const businessRaw = sessionStorage.getItem('arthniti-selected-business');
       
       if (!profileRaw || !businessRaw) {
-        throw new Error('Create a business plan first to analyse budget impact.');
+        setError('Please set up a business profile first.');
+        setLoading(false);
+        return;
       }
 
       const profile = JSON.parse(profileRaw);

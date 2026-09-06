@@ -293,7 +293,7 @@ export default function ExploreBusinesses() {
             </p>
             {filteredOut.length > 0 && (
               <ul className="text-left text-xs text-on-surface/70 mb-6 space-y-2 max-w-md mx-auto">
-                {filteredOut.slice(0, 6).map(f => (
+                {(filteredOut || []).slice(0, 6).map(f => (
                   <li key={f.id} className="bg-on-surface/5 rounded-lg px-3 py-2">
                     <span className="font-bold text-on-surface">{f.name}:</span> {f.reason}
                   </li>
@@ -309,7 +309,7 @@ export default function ExploreBusinesses() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {businesses.map(b => {
+            {(businesses || []).map(b => {
               const isSelected = selectedIds.includes(b.id);
               const isSelectable = isSelected || selectedIds.length < 3;
               return (

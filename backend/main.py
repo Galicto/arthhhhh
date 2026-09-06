@@ -39,6 +39,7 @@ import api_business
 import api_schemes
 import api_ai
 import api_finance
+import api_feasibility
 
 app = FastAPI(title="Arthniti AI Expense Classifier & PDF Engine", version="1.2")
 
@@ -47,6 +48,7 @@ app.include_router(api_business.router, prefix="/api/business", tags=["business"
 app.include_router(api_schemes.router, prefix="/api/schemes", tags=["schemes"])
 app.include_router(api_finance.router, prefix="/api/finance", tags=["finance"])
 app.include_router(api_ai.router, prefix="/api/ai", tags=["ai"])
+app.include_router(api_feasibility.router, prefix="/api/feasibility", tags=["feasibility"])
 
 app.add_middleware(
     CORSMiddleware,
@@ -67,7 +69,7 @@ async def health_check():
 
 @app.get("/api/ai/health")
 async def ai_health_check():
-    """Validate Gemini config + reachability. Never expose secrets."""
+    """Validate OpenRouter config + reachability. Never expose secrets."""
     import concurrent.futures
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
@@ -77,31 +79,31 @@ async def ai_health_check():
         import datetime
         result = {
             "status": "unavailable",
-            "provider": "gemini",
-            "safeMessage": "AI service is unavailable. Retry after the service is restored.",
-            "lastCheckedAt": datetime.datetime.now().isoformat(),
+            "provider": "openrouter",
+            "model": "google/gemini-2.5-flash",
+            "checkedAt": datetime.datetime.now().isoformat(),
+            "safeReason": "provider_timeout"
         }
     except Exception as e:
         import datetime
         print(f"AI health endpoint error: {type(e).__name__}")
         result = {
             "status": "unavailable",
-            "provider": "gemini",
-            "safeMessage": "AI service is unavailable. Retry after the service is restored.",
-            "lastCheckedAt": datetime.datetime.now().isoformat(),
+            "provider": "openrouter",
+            "model": "google/gemini-2.5-flash",
+            "checkedAt": datetime.datetime.now().isoformat(),
+            "safeReason": "network_failure"
         }
-    # Alias for older clients
-    result["message"] = result.get("safeMessage", "")
     return result
 
 @app.get("/api/providers/health")
 async def providers_health():
     import datetime
     import os
-    gemini_key = os.getenv("GEMINI_API_KEY")
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
     maps_key = (os.getenv("GOOGLE_MAPS_API_KEY") or "").strip()
     ts = datetime.datetime.now().isoformat()
-    ai_status = "connected" if (gemini_key and len(gemini_key) > 10) else "not_configured"
+    ai_status = "connected" if (openrouter_key and len(openrouter_key) > 10) else "not_configured"
     # Prefer cached probe if available
     cached = getattr(api_ai, "_last_ai_health", None) or {}
     if cached.get("status"):
@@ -109,9 +111,9 @@ async def providers_health():
     return {
         "ai": {
             "status": ai_status,
-            "provider": "gemini",
-            "lastCheckedAt": cached.get("lastCheckedAt") or ts,
-            "safeMessage": cached.get("safeMessage") or "",
+            "provider": "openrouter",
+            "lastCheckedAt": cached.get("checkedAt") or ts,
+            "safeMessage": cached.get("safeReason") or "",
         },
         "geocoding": {
             "status": "connected",

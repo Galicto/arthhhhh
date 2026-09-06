@@ -4,6 +4,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { useLanguage } from '../lib/i18n';
 import { usePredX } from '../context/PredXContext';
 import { chatWithAdvisor, fetchAiHealth } from '../lib/geminiAdvisor';
+import PanelErrorBoundary from '../components/PanelErrorBoundary';
 import { API_BASE_URL } from '../config';
 
 interface ChatMessage {
@@ -63,12 +64,12 @@ export default function ArthnitiChat() {
         setLastFailedStatus(null);
       } else {
         setAiStatus(data.status === 'not_configured' ? 'not_configured' : 'unavailable');
-        setAiMessage(data.safeMessage || 'AI service is unavailable. Retry after the service is restored.');
+        setAiMessage(`AI connection failed: ${data.safeReason || 'Unknown error'}`);
       }
     } catch {
       setAiStatus('unavailable');
       setAiConfigured(null);
-      setAiMessage('AI service is unavailable. Retry after the service is restored.');
+      setAiMessage('AI connection failed: network_failure');
     }
   };
 
@@ -166,9 +167,12 @@ export default function ArthnitiChat() {
       }]);
       setLastFailedStatus(null);
     } else {
-      // Persistent status card — do NOT append repeated error chat bubbles
-      setAiStatus('unavailable');
-      setAiMessage(result.message);
+      setMessages(prev => [...prev, {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${result.message}`,
+        timestamp: new Date(),
+      }]);
       setLastFailedStatus(result.statusCode);
     }
 
@@ -181,6 +185,7 @@ export default function ArthnitiChat() {
 
   return (
     <DashboardLayout>
+      <PanelErrorBoundary fallbackMessage="Arthniti Assistant could not load.">
       <div className="px-4 md:px-8 pb-12 md:pb-8 pt-4 max-w-4xl mx-auto flex flex-col" style={{ height: 'calc(100vh - 8rem)' }}>
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -216,7 +221,7 @@ export default function ArthnitiChat() {
         {(aiStatus === 'unavailable' || aiStatus === 'not_configured') && (
           <div className="bg-surface-container border border-outline-variant/10 p-5 rounded-2xl text-center mb-4 max-w-lg mx-auto flex-shrink-0">
             <span className="material-symbols-outlined text-4xl text-on-surface/40 mb-3">cloud_off</span>
-            <p className="text-base font-bold text-on-surface mb-2">AI service is unavailable. Retry after the service is restored.</p>
+            <p className="text-base font-bold text-on-surface mb-2">AI Provider Verification Failed</p>
             <p className="text-sm text-on-surface/60 mb-4">{aiMessage}</p>
             <div className="flex flex-wrap justify-center gap-2">
               <button
@@ -334,6 +339,7 @@ export default function ArthnitiChat() {
           </div>
         )}
       </div>
+      </PanelErrorBoundary>
     </DashboardLayout>
   );
 }

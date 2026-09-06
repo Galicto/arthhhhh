@@ -1,36 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { usePredX } from '../context/PredXContext';
 import { BusinessItem, LocationProfile } from '../providers/types';
 import SchemeMatcher from '../components/SchemeMatcher';
 import LocalBusinessMap from '../components/LocalBusinessMap';
-import { generateFeasibilityReport, FeasibilityReport as AIFeasibilityReport } from '../lib/geminiAdvisor';
+import PanelErrorBoundary from '../components/PanelErrorBoundary';
+import { normalizeFeasibilityReportResponse } from '../lib/schemas';
+import { safeNumber, safeCurrency, safeString, safeDate } from '../lib/safeFormatters';
 
 export default function FeasibilityReport() {
   const { navigate } = usePredX();
   const [activeTab, setActiveTab] = useState<'report' | 'map'>('report');
-  const [report, setReport] = useState<AIFeasibilityReport | null>(null);
+  
+  // States
+  const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastRequestIdRef = useRef<number>(0);
 
   const profileStr = sessionStorage.getItem('arthniti-profile');
   const profile = profileStr ? JSON.parse(profileStr) : null;
   const businessStr = sessionStorage.getItem('arthniti-selected-business');
   const business: BusinessItem = businessStr ? JSON.parse(businessStr) : null;
 
-  useEffect(() => {
-    if (profile && business) {
-      setLoading(true);
-      generateFeasibilityReport({
-        profile,
-        business,
-        financials: {}, // Not needed strictly for the text parts if we just pass context
-        schemes: []
-      }).then(r => {
-        setReport(r);
-        setLoading(false);
-      });
+  const fetchReport = async () => {
+    if (!profile || !business) return;
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  }, [profile, business]);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    
+    const requestId = Date.now();
+    lastRequestIdRef.current = requestId;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch('http://localhost:8000/api/feasibility/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: profile.location,
+          business: business,
+          userProfile: profile,
+          budget: profile.marginCapital || 500000,
+          selectedScenario: 'expected'
+        }),
+        signal: controller.signal
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch report');
+
+      const data = await res.json();
+      if (lastRequestIdRef.current === requestId) {
+        const normalized = normalizeFeasibilityReportResponse(data);
+        setReport(normalized);
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+      if (lastRequestIdRef.current === requestId) {
+        setError('We could not retrieve this insight right now. Retry or continue with available report data.');
+      }
+    } finally {
+      if (lastRequestIdRef.current === requestId) {
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchReport();
+    return () => {
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
+  }, [profile?.location?.district, business?.category]);
 
   if (!profile || !business) {
     return (
@@ -112,13 +160,28 @@ export default function FeasibilityReport() {
               <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
                 <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4 flex items-center justify-between">
                   Executive Summary
-                  {report?.citations && report.citations.length > 0 && (
+                  {report?.strategicAdvisory?.status === 'ready' && (
                     <span className="text-[10px] bg-[#FF5A00]/20 text-[#FF5A00] px-2 py-1 rounded-md">AI Verified</span>
                   )}
                 </h3>
-                <p className="text-sm text-on-surface leading-relaxed mb-4">
-                  {loading ? 'Analyzing data...' : report?.recommendationSummary}
-                </p>
+                
+                {loading ? (
+                  <div className="animate-pulse space-y-2 mb-4">
+                    <div className="h-4 bg-on-surface/10 rounded w-full"></div>
+                    <div className="h-4 bg-on-surface/10 rounded w-5/6"></div>
+                    <div className="h-4 bg-on-surface/10 rounded w-4/6"></div>
+                  </div>
+                ) : error ? (
+                  <div className="text-sm text-red-400 mb-4 bg-red-500/10 p-3 rounded-lg border border-red-500/20 flex justify-between items-center">
+                    {error}
+                    <button onClick={fetchReport} className="px-3 py-1 bg-red-500/20 rounded hover:bg-red-500/30">Retry</button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-on-surface leading-relaxed mb-4">
+                    Based on your profile and {business.name}, we've analyzed {profile.location.district}. Here is your deterministic financial estimate alongside strategic AI insights.
+                  </p>
+                )}
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-on-surface/5 rounded-xl p-3 border border-outline-variant/5">
                     <p className="text-[10px] text-on-surface-variant uppercase mb-1">Viability Score</p>
@@ -140,41 +203,62 @@ export default function FeasibilityReport() {
               </div>
 
               {/* AI Deep Dive */}
-              <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
-                <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Strategic Advisory</h3>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl">
-                    <h4 className="text-emerald-500 font-bold text-xs uppercase mb-2">Why Recommended</h4>
-                    <ul className="text-xs text-on-surface/80 space-y-1 list-disc pl-4">
-                      {loading ? <li>Loading...</li> : report?.whyRecommended.map((r, i) => <li key={i}>{r}</li>)}
-                    </ul>
-                  </div>
-                  <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl">
-                    <h4 className="text-red-400 font-bold text-xs uppercase mb-2">Risks & Mitigations</h4>
-                    <ul className="text-xs text-on-surface/80 space-y-1 list-disc pl-4">
-                      {loading ? <li>Loading...</li> : report?.risks.map((r, i) => <li key={i}>{r}</li>)}
-                    </ul>
-                  </div>
-                </div>
-
-                <h4 className="text-xs font-bold text-on-surface mb-2">Data & Sources Provenance</h4>
-                <div className="bg-on-surface/5 p-4 rounded-xl border border-outline-variant/5 text-xs text-on-surface/70">
+              <PanelErrorBoundary fallbackMessage="Strategic Advisory could not load." onRetry={fetchReport}>
+                <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10 min-h-[300px]">
+                  <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Strategic Advisory</h3>
+                  
                   {loading ? (
-                    'Fetching source integrity...'
-                  ) : report?.citations && report.citations.length > 0 ? (
-                    <ul className="list-disc pl-4 space-y-2">
-                      {report.citations.map((c, i) => (
-                        <li key={i}>
-                          <span className="font-bold">{c.title}</span> ({c.retrievedAt}): {c.claim}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                      <div className="bg-on-surface/5 animate-pulse h-32 rounded-xl"></div>
+                      <div className="bg-on-surface/5 animate-pulse h-32 rounded-xl"></div>
+                    </div>
+                  ) : report?.strategicAdvisory?.status === 'unavailable' || report?.strategicAdvisory?.status === 'error' ? (
+                    <div className="mb-6 p-4 bg-red-500/10 rounded-xl border border-red-500/20 text-center">
+                      <p className="text-xs text-on-surface/80 mb-2">{report.strategicAdvisory.message || "This insight is temporarily unavailable. Your financial plan is still available."}</p>
+                      <button onClick={fetchReport} className="bg-red-500/20 text-red-500 px-4 py-1.5 rounded text-xs font-bold hover:bg-red-500/30 transition-colors">
+                        Retry AI Insight
+                      </button>
+                    </div>
                   ) : (
-                    'Data sources fetched from standard mock proxy. Production external verification unavailable.'
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl">
+                        <h4 className="text-emerald-500 font-bold text-xs uppercase mb-2">Why Recommended</h4>
+                        <ul className="text-xs text-on-surface/80 space-y-1 list-disc pl-4">
+                          {report?.strategicAdvisory?.advisory?.whyRecommended?.map((r: any, i: number) => <li key={i}>{typeof r === 'object' ? JSON.stringify(r) : safeString(r)}</li>)}
+                        </ul>
+                      </div>
+                      <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl">
+                        <h4 className="text-red-400 font-bold text-xs uppercase mb-2">Risks & Mitigations</h4>
+                        <ul className="text-xs text-on-surface/80 space-y-2 pl-2">
+                          {report?.strategicAdvisory?.advisory?.risksAndMitigations?.map((r: any, i: number) => (
+                            <li key={i}>
+                              <span className="font-bold text-red-400 block">{typeof r?.risk === 'object' ? JSON.stringify(r.risk) : (safeString(r?.risk) || 'Risk factor')}</span>
+                              <span className="text-on-surface/60">{typeof r?.mitigation === 'object' ? JSON.stringify(r.mitigation) : (safeString(r?.mitigation) || typeof r === 'string' ? safeString(r) : 'Mitigation unavailable')}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   )}
+
+                  <h4 className="text-xs font-bold text-on-surface mb-2">Data & Sources Provenance</h4>
+                  <div className="bg-on-surface/5 p-4 rounded-xl border border-outline-variant/5 text-xs text-on-surface/70">
+                    {loading ? (
+                      <div className="animate-pulse h-6 bg-on-surface/10 rounded w-1/2"></div>
+                    ) : Array.isArray(report?.sources) && report.sources.length > 0 ? (
+                      <ul className="list-disc pl-4 space-y-2">
+                        {report.sources.map((c: any, i: number) => (
+                          <li key={i}>
+                            <span className="font-bold">{safeString(c?.title)}</span> ({safeDate(c?.retrievedAt)}): {safeString(c?.claim)}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      'Production source unavailable. Using deterministic estimates.'
+                    )}
+                  </div>
                 </div>
-              </div>
+              </PanelErrorBoundary>
 
             </div>
 
@@ -184,45 +268,58 @@ export default function FeasibilityReport() {
               {/* Location Profile Context */}
               <div className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10">
                 <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Location Context</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-[10px] text-on-surface-variant uppercase">Primary Sectors</p>
-                    <p className="text-sm font-semibold text-on-surface">{profile.location.primarySectors.join(', ')}</p>
+                {loading ? (
+                  <div className="space-y-3">
+                    <div className="h-8 bg-on-surface/5 animate-pulse rounded"></div>
+                    <div className="h-8 bg-on-surface/5 animate-pulse rounded"></div>
                   </div>
-                  <div>
-                    <p className="text-[10px] text-on-surface-variant uppercase">Population Base</p>
-                    <p className="text-sm font-semibold text-on-surface">{profile.location.population?.toLocaleString('en-IN')}</p>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-[10px] text-on-surface-variant uppercase">Primary Sectors</p>
+                      <p className="text-sm font-semibold text-on-surface">{report?.locationContext?.primarySectors?.join(', ') || (profile?.location?.primarySectors || []).join(', ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-on-surface-variant uppercase">Population Base</p>
+                      <p className="text-sm font-semibold text-on-surface">{report?.locationContext?.population?.toLocaleString('en-IN') || profile?.location?.population?.toLocaleString('en-IN')}</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Scheme Matcher */}
-              <div className="bg-surface-container-high rounded-2xl p-6 border border-[#FF5A00]/20 shadow-[0_4px_20px_rgba(255,90,0,0.05)]">
+              <div className="bg-surface-container-high rounded-2xl p-6 border border-[#FF5A00]/20 shadow-[0_4px_20px_rgba(255,90,0,0.05)] min-h-[300px]">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="material-symbols-outlined text-[#FF5A00]">assured_workload</span>
                   <h3 className="text-sm font-bold text-on-surface uppercase tracking-wider">Scheme Matching</h3>
                 </div>
                 <p className="text-xs text-on-surface/60">Based on your {profile.isArtisan ? 'artisan' : ''} profile in {profile.location.state}.</p>
                 
-                <SchemeMatcher 
-                  profile={{
-                    state: profile.location.state,
-                    category: business.category,
-                    projectCost: business.avgOperatingCost * 6,
-                    marginCapital: profile.marginCapital,
-                    socialCategory: profile.socialCategory,
-                    gender: profile.gender,
-                    isArtisan: profile.isArtisan,
-                    isExistingEnterprise: false,
-                  }}
-                />
+                {loading ? (
+                  <div className="mt-4 space-y-4">
+                    <div className="h-24 bg-on-surface/5 animate-pulse rounded-xl"></div>
+                    <div className="h-24 bg-on-surface/5 animate-pulse rounded-xl"></div>
+                  </div>
+                ) : (
+                  <SchemeMatcher 
+                    status={report?.schemeMatching?.status || "unavailable"}
+                    matches={report?.schemeMatching?.matches || []}
+                    message={report?.schemeMatching?.message}
+                    sources={report?.schemeMatching?.sources || []}
+                    providerStatus={report?.schemeMatching?.providerStatus}
+                    retrievedAt={report?.schemeMatching?.retrievedAt}
+                    onRetry={fetchReport}
+                  />
+                )}
               </div>
 
             </div>
           </div>
         ) : (
           <div className="animate-fade-in">
-            <LocalBusinessMap location={profile.location} business={business} />
+            <PanelErrorBoundary fallbackMessage="The map visualization could not be loaded.">
+              <LocalBusinessMap location={profile.location} business={business} />
+            </PanelErrorBoundary>
           </div>
         )}
 

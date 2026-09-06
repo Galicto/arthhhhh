@@ -383,8 +383,7 @@ def build_opportunities(
     provider_name: str,
     timestamp: str,
 ) -> tuple:
-    """Build evidence-based ideas. Returns (results, filtered_out)."""
-    demand_total = counts["schools"] + counts["hospitals"] + counts["markets"] + counts["industrial"]
+    """Build evidence-based ideas using a 5-factor deterministic scoring model. Returns (results, filtered_out)."""
     results = []
     filtered_out = []
 
@@ -404,7 +403,6 @@ def build_opportunities(
             "anchor": counts["markets"] + counts["schools"] + counts["industrial"],
             "rule": "Dense residential + market anchors support daily-needs retail.",
             "prefer_when": lambda c: c["markets"] + c["schools"] >= 2,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-dairy",
@@ -420,7 +418,6 @@ def build_opportunities(
             "anchor": counts["markets"] + counts["agriculture"],
             "rule": "Dairy recommended only when competition is not already dense.",
             "prefer_when": lambda c: c["dairy"] < 8 and (c["markets"] > 0 or c["agriculture"] > 0),
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-food",
@@ -436,7 +433,6 @@ def build_opportunities(
             "anchor": counts["hospitals"] + counts["markets"] + counts["schools"] + counts["industrial"],
             "rule": "Offices, schools, hospitals and markets create meal demand.",
             "prefer_when": lambda c: (c["hospitals"] + c["markets"] + c["schools"] + c["industrial"]) >= 2,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-tailoring",
@@ -452,7 +448,6 @@ def build_opportunities(
             "anchor": counts["markets"] + counts["schools"],
             "rule": "Local garment demand near markets and residential clusters.",
             "prefer_when": lambda c: True,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-printing",
@@ -468,7 +463,6 @@ def build_opportunities(
             "anchor": counts["schools"],
             "rule": "Schools + limited print shops → stationery/xerox opportunity.",
             "prefer_when": lambda c: c["schools"] >= 1 and c["printing"] <= 3,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-repair",
@@ -484,7 +478,6 @@ def build_opportunities(
             "anchor": counts["markets"] + counts["schools"] + counts["hospitals"],
             "rule": "Service anchors support repair demand.",
             "prefer_when": lambda c: (c["markets"] + c["schools"] + c["hospitals"]) >= 2,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-agri",
@@ -500,7 +493,6 @@ def build_opportunities(
             "anchor": counts["agriculture"] + counts["markets"] + counts["industrial"],
             "rule": "Agricultural activity near markets supports agri-input retail.",
             "prefer_when": lambda c: c["agriculture"] > 0 or c["industrial"] > 0 or c["markets"] > 0,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-rental",
@@ -516,7 +508,6 @@ def build_opportunities(
             "anchor": counts["agriculture"] + counts["industrial"] + counts["markets"],
             "rule": "Agri/industrial activity + low rental listings → equipment rental gap.",
             "prefer_when": lambda c: (c["agriculture"] + c["industrial"]) >= 1 and c["rental"] <= 2,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-beauty",
@@ -532,7 +523,6 @@ def build_opportunities(
             "anchor": counts["markets"] + counts["schools"],
             "rule": "Residential + market clusters support local beauty services.",
             "prefer_when": lambda c: c["markets"] + c["schools"] >= 1,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-digital",
@@ -548,7 +538,6 @@ def build_opportunities(
             "anchor": counts["markets"] + counts["schools"] + counts["hospitals"] + counts["industrial"],
             "rule": "Service anchors create demand for documentation & digital access.",
             "prefer_when": lambda c: (c["markets"] + c["schools"] + c["hospitals"]) >= 2 and c["digital"] <= 3,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-transport",
@@ -564,7 +553,6 @@ def build_opportunities(
             "anchor": counts["markets"] + counts["industrial"],
             "rule": "Market and industrial anchors create last-mile logistics demand.",
             "prefer_when": lambda c: c["markets"] + c["industrial"] >= 1,
-            "penalize_high_comp": True,
         },
         {
             "id": "idea-handicrafts",
@@ -580,7 +568,6 @@ def build_opportunities(
             "anchor": counts["markets"] + counts["handicrafts"],
             "rule": "Local craft activity near markets supports artisan enterprise.",
             "prefer_when": lambda c: profile.get("isArtisan") or c["handicrafts"] > 0 or c["markets"] > 0,
-            "penalize_high_comp": False,
         },
     ]
 
@@ -588,27 +575,43 @@ def build_opportunities(
 
     for idea in ideas:
         if not idea["prefer_when"](counts):
-            # Still surface if we have any live data — mark lower confidence rather than invent
             if counts["total"] == 0:
                 continue
 
         comp_count = counts.get(idea["comp_key"], 0)
         density = _density_label(comp_count, radius_km)
-        demand_score = 45 + min(40, idea["anchor"] * 4)
-        if idea["penalize_high_comp"]:
-            if density == "high":
-                demand_score -= 25  # dense dairy/food etc. should not auto-recommend
-            elif density == "medium":
-                demand_score -= 10
-        # Boost when evidence rule strongly matches (e.g. schools + few printers)
-        if idea["id"] == "idea-printing" and counts["schools"] >= 1 and counts["printing"] <= 2:
-            demand_score += 15
-        if idea["id"] == "idea-rental" and counts["rental"] <= 1 and (counts["agriculture"] + counts["industrial"]) >= 1:
-            demand_score += 15
-
-        demand_score = int(min(100, max(5, demand_score)))
         schemes = _match_schemes_for_idea(idea, profile, budget)
         within_budget = budget <= 0 or budget >= idea["minCapital"]
+
+        # Factor 1: Local Demand (0-30)
+        demand_points = min(30, max(5, idea["anchor"] * 4))
+        if idea["id"] == "idea-printing" and counts["schools"] >= 1: demand_points += 5
+        if idea["id"] == "idea-rental" and (counts["agriculture"] + counts["industrial"]) >= 1: demand_points += 5
+        demand_points = min(30, demand_points)
+
+        # Factor 2: Competition density (0-25)
+        if density == "high": comp_points = 5
+        elif density == "medium": comp_points = 15
+        else: comp_points = 25
+
+        # Factor 3: Financial viability (0-25)
+        fin_points = 25 if within_budget else 10
+        margin = max(0, idea["avgRevenue"] - idea["avgOperatingCost"])
+        if margin > 15000: fin_points = min(25, fin_points + 5)
+        
+        # Factor 4: User profile fit (0-10)
+        profile_points = 5
+        if (idea["workType"] == profile.get("workPreference") or not profile.get("workPreference")):
+            profile_points += 2
+        if idea["skillLevel"] == profile.get("skillLevel") or idea["skillLevel"] == "Beginner" or not profile.get("skillLevel"):
+            profile_points += 3
+
+        # Factor 5: Verified scheme fit (0-10)
+        scheme_points = 10 if len(schemes) > 0 else 0
+
+        total_score = int(demand_points + comp_points + fin_points + profile_points + scheme_points)
+        # Cap at 95 unless it's a completely perfect match across the board, which is rare.
+        total_score = min(98, total_score)
 
         item = {
             "id": idea["id"],
@@ -625,7 +628,14 @@ def build_opportunities(
             "isWomenFriendly": True,
             "competitorDensity": density,
             "competitorCount": comp_count,
-            "demandProxyScore": demand_score,
+            "demandProxyScore": total_score,
+            "scoreBreakdown": {
+                "demand": demand_points,
+                "competition": comp_points,
+                "finance": fin_points,
+                "profile": profile_points,
+                "schemes": scheme_points
+            },
             "schemeSupported": len(schemes) > 0,
             "matchedSchemes": schemes,
             "radiusKm": radius_km,
@@ -662,8 +672,8 @@ def build_opportunities(
 
         results.append(item)
 
-    # Sort: prefer lower competition + higher demand evidence
-    results.sort(key=lambda r: (0 if r["competitorDensity"] == "low" else 1 if r["competitorDensity"] == "medium" else 2, -r["demandProxyScore"]))
+    # Sort: prefer higher total score
+    results.sort(key=lambda r: -r["demandProxyScore"])
     return results, filtered_out
 
 
@@ -793,6 +803,47 @@ async def discover_businesses(req: DiscoverRequest):
                     "name": r["name"],
                     "reason": "No verified official scheme match for this idea under current profile.",
                 })
+
+    # NEW LOGIC: Dynamic Deep Analysis using Gemini 2.5 Flash
+    if results:
+        import api_ai
+        import asyncio
+        import json
+        
+        prompt = f"""You are Arthniti AI, an expert rural business advisor.
+We have found the following business opportunities. Based on the local statistics provided below, write a deep, 1-2 sentence analytical paragraph for EACH business explaining its viability and potential.
+Local Statistics:
+- Schools: {counts.get('schools', 0)}
+- Markets: {counts.get('markets', 0)}
+- Hospitals: {counts.get('hospitals', 0)}
+- Industrial/Commercial: {counts.get('industrial', 0)}
+
+Respond strictly in JSON format where keys are business IDs and values are the analytical paragraphs.
+{{
+  "idea-grocery": "analysis text...",
+  ...
+}}
+
+Businesses:
+"""
+        for r in results:
+            prompt += f"- ID: {r['id']}, Name: {r['name']}, Category: {r['category']}, Competition Count: {r.get('competitorCount')}\n"
+            
+        try:
+            response_text, _ = await asyncio.to_thread(api_ai._generate, prompt)
+            text = response_text.strip()
+            if text.startswith("```json"): text = text[7:]
+            if text.startswith("```"): text = text[3:]
+            if text.endswith("```"): text = text[:-3]
+            parsed_analysis = json.loads(text.strip())
+            
+            for r in results:
+                if r["id"] in parsed_analysis:
+                    r["signals"] = parsed_analysis[r["id"]]
+                    if isinstance(r.get("provenance"), dict):
+                        r["provenance"]["dataType"] = "AI-Generated Deep Analysis (Gemini 2.5 Flash)"
+        except Exception as e:
+            print(f"Failed to generate deep analysis: {e}")
 
     status = "ok" if results else "no_suitable"
     return {

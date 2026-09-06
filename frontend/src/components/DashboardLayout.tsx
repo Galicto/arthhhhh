@@ -229,26 +229,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           ))}
         </div>
 
-        {/* Trading Section */}
-        <div className="space-y-1 mt-4">
-          <div className="px-4 py-2 text-[10px] uppercase tracking-widest text-on-surface-variant font-bold opacity-50">Trading</div>
-          {tradingItems.map(item => (
-            <a
-              key={item.id}
-              className={currentPage === item.id
-                ? sideItemActiveClass
-                : sideItemClass
-              }
-              onClick={() => navigate(item.id)}
-            >
-              <span className="material-symbols-outlined" style={currentPage === item.id ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                {item.icon}
-              </span>
-              {item.label}
-            </a>
-          ))}
-        </div>
-        
+
         <div className="mt-auto space-y-1 pt-4">
           <a 
             className={currentPage === 'settings'

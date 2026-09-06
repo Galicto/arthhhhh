@@ -4,55 +4,46 @@ from typing import Dict, Any, List, Optional
 import os
 import json
 import datetime
-import google.generativeai as genai
+import asyncio
+import requests
 
 router = APIRouter()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-# Prefer env override; default to a currently listed flash model for new API keys
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "models/gemini-flash-latest")
-# Fallbacks if primary is unavailable to this key/quota
-GEMINI_MODEL_FALLBACKS = [
-    m.strip() for m in (os.getenv("GEMINI_MODEL_FALLBACKS") or "").split(",") if m.strip()
-] or [
-    "models/gemini-flash-latest",
-    "models/gemini-flash-lite-latest",
-    "models/gemini-pro-latest",
-    "models/gemini-3.6-flash",
-    "models/gemini-2.5-flash",
-]
+import google.generativeai as genai
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY.strip().strip('"'))
-
-# In-memory last health check (no secrets)
-_last_ai_health = {
-    "status": "not_configured",
-    "lastCheckedAt": None,
-    "safeMessage": "",
-}
-
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+genai.configure(api_key=GEMINI_API_KEY)
+GEMINI_MODEL = "gemini-3.6-flash"
 
 def _key_configured() -> bool:
-    key = (GEMINI_API_KEY or "").strip().strip('"')
-    return bool(key and len(key) >= 10)
-
+    return bool(GEMINI_API_KEY)
 
 def _generate(prompt: str):
-    """Try primary model then fallbacks. Raises last error if all fail."""
-    models = [GEMINI_MODEL] + [m for m in GEMINI_MODEL_FALLBACKS if m != GEMINI_MODEL]
-    last_err = None
-    for model_name in models:
-        try:
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt, request_options={"timeout": 45})
-            return response, model_name
-        except Exception as e:
-            last_err = e
-            print(f"Gemini model {model_name} failed: {type(e).__name__}")
-            continue
-    raise last_err or RuntimeError("No Gemini model available")
+    """Hits Google Gemini API. Returns (response_text, model_name)."""
+    if not _key_configured():
+        raise RuntimeError("Gemini API Key not configured")
 
+    try:
+        model = genai.GenerativeModel(GEMINI_MODEL)
+        response = model.generate_content(prompt)
+        return response.text, GEMINI_MODEL
+    except Exception as e:
+        err_msg = str(e).lower()
+        if "quota" in err_msg or "429" in err_msg:
+            raise Exception("ResourceExhausted")
+        elif "permission" in err_msg or "401" in err_msg or "403" in err_msg:
+            raise PermissionError("HTTP 401/403")
+        raise e
+
+
+# In-memory last health check
+_last_ai_health = {
+    "status": "not_configured",
+    "provider": "gemini",
+    "model": None,
+    "checkedAt": None,
+    "safeReason": "Service not initialized"
+}
 
 def probe_gemini() -> dict:
     """Validate provider config + live model reachability. Never logs secrets."""
@@ -62,54 +53,64 @@ def probe_gemini() -> dict:
         _last_ai_health = {
             "status": "not_configured",
             "provider": "gemini",
-            "safeMessage": "AI service is unavailable. Retry after the service is restored.",
-            "lastCheckedAt": now,
-            "model": GEMINI_MODEL,
+            "model": None,
+            "checkedAt": now,
+            "safeReason": "invalid_credentials"
         }
         return _last_ai_health
 
     try:
-        response, used_model = _generate("Reply with exactly: OK")
-        text = (response.text or "").strip().upper()
+        response_text, used_model = _generate("Reply with exactly: OK")
+        text = (response_text or "").strip().upper()
         if "OK" in text or len(text) > 0:
             _last_ai_health = {
                 "status": "connected",
                 "provider": "gemini",
-                "safeMessage": "AI advisory is ready.",
-                "lastCheckedAt": now,
                 "model": used_model,
+                "checkedAt": now,
+                "safeReason": "connected"
             }
         else:
             _last_ai_health = {
                 "status": "unavailable",
                 "provider": "gemini",
-                "safeMessage": "AI service is unavailable. Retry after the service is restored.",
-                "lastCheckedAt": now,
                 "model": used_model,
+                "checkedAt": now,
+                "safeReason": "malformed_response"
             }
     except Exception as e:
         err_name = type(e).__name__
-        print(f"AI health probe failed: {err_name}")
-        msg = "AI service is unavailable. Retry after the service is restored."
-        # Quotas / permission — still no raw provider payload to client
-        if "ResourceExhausted" in err_name or "429" in str(e):
-            msg = "AI service is unavailable. Retry after the service is restored."
+        err_msg = str(e)
+        print(f"AI health probe failed: {err_name} - {err_msg}")
+        safe_reason = "network_failure"
+        
+        if "FileNotFoundError" in err_name or "404" in err_msg:
+            safe_reason = "invalid_model"
+        elif "ResourceExhausted" in err_msg or "429" in err_msg:
+            safe_reason = "quota_exceeded"
+        elif "Timeout" in err_name:
+            safe_reason = "provider_timeout"
+        elif "PermissionError" in err_name or "401" in err_msg or "403" in err_msg:
+            safe_reason = "invalid_credentials"
+            
         _last_ai_health = {
             "status": "unavailable",
             "provider": "gemini",
-            "safeMessage": msg,
-            "lastCheckedAt": now,
             "model": GEMINI_MODEL,
+            "checkedAt": now,
+            "safeReason": safe_reason
         }
     return _last_ai_health
 
 
 class AdvisoryRequest(BaseModel):
-    profile: Dict[str, Any]
     business: Dict[str, Any]
-    financials: Dict[str, Any]
-    schemes: List[Dict[str, Any]]
-
+    location: Optional[Dict[str, Any]] = None
+    finance: Optional[Dict[str, Any]] = None
+    competition: Optional[Dict[str, Any]] = None
+    demandAnchors: Optional[List[Dict[str, Any]]] = None
+    schemes: Optional[List[Dict[str, Any]]] = None
+    sourceMetadata: Optional[List[Dict[str, Any]]] = None
 
 class ChatRequest(BaseModel):
     message: str
@@ -123,61 +124,106 @@ class ChatRequest(BaseModel):
     sourceMetadata: Optional[List[Dict[str, Any]]] = None
     context: Optional[Dict[str, Any]] = None
 
-
 @router.post("/advisory")
 async def generate_advisory(req: AdvisoryRequest):
+    timestamp = datetime.datetime.now().isoformat()
     if not _key_configured():
-        raise HTTPException(status_code=503, detail="AI service is unavailable. Retry after the service is restored.")
+        return {
+            "status": "unavailable",
+            "advisory": {
+                "whyRecommended": [],
+                "risksAndMitigations": [],
+                "opportunities": [],
+                "dataGaps": [],
+                "confidence": None
+            },
+            "message": "AI service is unavailable. Retry after the service is restored.",
+            "citations": [],
+            "generatedAt": timestamp
+        }
 
     prompt = f"""
 You are an expert rural business advisor for Arthniti (India).
-You MUST output ONLY valid JSON matching this schema:
+You MUST output ONLY valid JSON matching this exact schema:
 {{
-  "recommendationSummary": "String",
-  "whyRecommended": ["String"],
-  "risks": ["String"],
-  "riskMitigations": ["String"],
-  "opportunities": ["String"],
-  "questionsForUser": ["String"],
-  "dataGaps": ["String"],
-  "confidenceExplanation": "String",
-  "citations": [
-    {{
-      "title": "String",
-      "url": "String",
-      "retrievedAt": "String",
-      "claim": "String"
-    }}
-  ]
+  "advisory": {{
+    "whyRecommended": ["string", "string"],
+    "risksAndMitigations": [
+      {{ "risk": "string", "mitigation": "string" }}
+    ],
+    "opportunities": ["string"],
+    "dataGaps": ["string"],
+    "confidence": "high" | "medium" | "low"
+  }}
 }}
 
-INPUT DATA (DO NOT HALLUCINATE OUTSIDE OF THIS):
-Profile: {json.dumps(req.profile)}
+INPUT DATA:
 Business: {json.dumps(req.business)}
-Financials: {json.dumps(req.financials)}
+Location: {json.dumps(req.location)}
+Finance: {json.dumps(req.finance)}
+Competition: {json.dumps(req.competition)}
+Demand Anchors: {json.dumps(req.demandAnchors)}
 Schemes: {json.dumps(req.schemes)}
 
 RULES:
-- Never invent nearby businesses, job listings, scheme terms, eligibility, or financial figures.
-- Never calculate EMI or margin yourself — use the provided Financials.
-- Never guarantee loans. Use 'may be eligible'.
-- If data is missing, note it in dataGaps.
-- Cite only sources present in the input.
+- Base analysis ONLY on actual evidence provided.
+- Do not hallucinate external schemes or financial values.
 """
+    async def attempt_parse(p, attempt=1):
+        response_text, _ = await asyncio.to_thread(_generate, p)
+        text = response_text.strip()
+        if text.startswith("```json"): text = text[7:]
+        if text.startswith("```"): text = text[3:]
+        if text.endswith("```"): text = text[:-3]
+        parsed = json.loads(text.strip())
+        
+        # Normalize response
+        advisory = parsed.get("advisory", {}) if isinstance(parsed, dict) else {}
+        
+        def enforce_list(val):
+            if isinstance(val, list): return val
+            if isinstance(val, str): return [val]
+            return []
+            
+        return {
+            "status": "ready",
+            "advisory": {
+                "whyRecommended": enforce_list(advisory.get("whyRecommended")),
+                "risksAndMitigations": enforce_list(advisory.get("risksAndMitigations")),
+                "opportunities": enforce_list(advisory.get("opportunities")),
+                "dataGaps": enforce_list(advisory.get("dataGaps")),
+                "confidence": advisory.get("confidence", None)
+            },
+            "message": "",
+            "citations": [],
+            "generatedAt": timestamp
+        }
+
     try:
-        response, used_model = _generate(prompt)
-        text = response.text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.endswith("```"):
-            text = text[:-3]
-        return json.loads(text.strip())
+        return await attempt_parse(prompt)
     except json.JSONDecodeError:
-        print("Advisory JSON parse error — raw text was not valid JSON")
-        raise HTTPException(status_code=502, detail="AI returned an unparseable response. Please try again.")
+        try:
+            # 1 retry with repair prompt
+            repair_prompt = prompt + "\n\nWARNING: Your last output was not valid JSON. Please fix any trailing commas or unescaped quotes and return ONLY valid JSON."
+            return await attempt_parse(repair_prompt, attempt=2)
+        except Exception:
+            pass # Fall through to fallback
     except Exception as e:
-        print(f"Advisory Generation Error: {type(e).__name__}")
-        raise HTTPException(status_code=502, detail="AI service is unavailable. Retry after the service is restored.")
+        print(f"Advisory Generation Error: {type(e).__name__} - {str(e)}")
+        
+    return {
+        "status": "unavailable",
+        "advisory": {
+            "whyRecommended": [],
+            "risksAndMitigations": [],
+            "opportunities": [],
+            "dataGaps": [],
+            "confidence": None
+        },
+        "message": "AI service is temporarily unavailable. Please retry later.",
+        "citations": [],
+        "generatedAt": timestamp
+    }
 
 
 @router.post("/chat")
@@ -232,15 +278,15 @@ Other Context: {json.dumps(req.context)}
 User Question: {req.message}
 """
     try:
-        response, used_model = _generate(prompt)
+        response_text, used_model = await asyncio.to_thread(_generate, prompt)
         return {
-            "response": response.text.strip(),
+            "response": response_text.strip(),
             "status": "ok",
-            "provider": "gemini",
+            "provider": "openrouter",
             "model": used_model,
         }
     except Exception as e:
-        print(f"Chat Error: {type(e).__name__}")
+        print(f"Chat Error: {type(e).__name__} - {str(e)}")
         raise HTTPException(
             status_code=503,
             detail="AI service is unavailable. Retry after the service is restored.",

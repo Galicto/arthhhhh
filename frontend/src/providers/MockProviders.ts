@@ -78,7 +78,8 @@ export class ApiSchemeProvider implements SchemeProvider {
         body: JSON.stringify(profile)
       });
       if (!res.ok) return [];
-      return await res.json();
+      const data = await res.json();
+      return data.matches || [];
     } catch (e) {
       console.error("Schemes API failed:", e);
       return [];

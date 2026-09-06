@@ -6,64 +6,13 @@
 import type { FinancialResult, ViabilityFactor } from './financialCalculator';
 import { LocationProfile, BusinessItem } from '../providers/types';
 
-export interface FeasibilityReport {
-  recommendationSummary: string;
-  whyRecommended: string[];
-  risks: string[];
-  riskMitigations: string[];
-  opportunities: string[];
-  questionsForUser: string[];
-  dataGaps: string[];
-  confidenceExplanation: string;
-  citations: {
-    title: string;
-    url: string;
-    retrievedAt: string;
-    claim: string;
-  }[];
-}
-
-export interface AdvisorInput {
-  profile: any;
-  business: any;
-  financials: any;
-  schemes: any[];
-}
+// Feasibility report orchestration moved to backend: POST /api/feasibility/report
 
 const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
 
 export type ChatResult =
   | { ok: true; response: string }
   | { ok: false; statusCode: number; message: string };
-
-export async function generateFeasibilityReport(input: AdvisorInput): Promise<FeasibilityReport> {
-  try {
-    const res = await fetch(`${API_BASE}/api/ai/advisory`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Backend AI error: ${res.status}`);
-    }
-
-    return await res.json();
-  } catch (err: any) {
-    console.error('Arthniti Backend AI Advisor failed:', err);
-    return {
-      recommendationSummary: "AI Advisory is currently unavailable.",
-      whyRecommended: [],
-      risks: ["System is operating in offline mode."],
-      riskMitigations: [],
-      opportunities: [],
-      questionsForUser: [],
-      dataGaps: ["Could not reach backend API."],
-      confidenceExplanation: "Low confidence due to API unavailability.",
-      citations: []
-    };
-  }
-}
 
 export async function chatWithAdvisor(
   message: string,
@@ -113,8 +62,9 @@ export async function chatWithAdvisor(
 export async function fetchAiHealth(): Promise<{
   status: 'connected' | 'unavailable' | 'not_configured';
   provider: string;
-  safeMessage: string;
-  lastCheckedAt: string;
+  model: string | null;
+  checkedAt: string;
+  safeReason: string;
 }> {
   const res = await fetch(`${API_BASE}/api/ai/health`);
   if (!res.ok) throw new Error(`health_${res.status}`);
@@ -122,7 +72,8 @@ export async function fetchAiHealth(): Promise<{
   return {
     status: data.status,
     provider: data.provider || 'gemini',
-    safeMessage: data.safeMessage || data.message || '',
-    lastCheckedAt: data.lastCheckedAt || '',
+    model: data.model || null,
+    checkedAt: data.checkedAt || '',
+    safeReason: data.safeReason || '',
   };
 }
