@@ -24,3 +24,14 @@ model/
 *.pkl
 checkpoint-*/
 results/
+
+# OS & Temp
+.DS_Store
+*.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Databases
+*.sqlite3
+*.db

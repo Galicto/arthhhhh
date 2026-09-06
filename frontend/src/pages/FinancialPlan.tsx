@@ -180,6 +180,64 @@ export default function FinancialPlan() {
                 </div>
               </div>
             </section>
+
+            {finPlan.detailedReport && (
+              <section className="bg-surface-container rounded-2xl p-6 border border-outline-variant/10 mb-6">
+                <h3 className="text-xl font-headline font-bold text-on-surface mb-4">Complete Financial Report</h3>
+                <p className="text-sm text-on-surface/80 mb-6">{finPlan.detailedReport.summary}</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                  <div>
+                    <h4 className="text-sm font-bold text-on-surface mb-4 uppercase tracking-widest opacity-60">Capital Allocation</h4>
+                    <div className="space-y-4">
+                      {finPlan.detailedReport.capitalAllocation.map((item: any, idx: number) => (
+                        <div key={idx} className="bg-on-surface/5 p-4 rounded-xl border border-on-surface/10">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="font-bold text-on-surface">{item.category}</span>
+                            <span className="text-[#FF5A00] font-bold">{item.percentage}%</span>
+                          </div>
+                          <p className="text-xs text-on-surface/60">{item.note}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-on-surface mb-4 uppercase tracking-widest opacity-60">Actionable Next Steps</h4>
+                    <ul className="space-y-3">
+                      {finPlan.detailedReport.nextSteps.map((step: string, idx: number) => (
+                        <li key={idx} className="flex gap-3 text-sm text-on-surface/80 items-start">
+                          <span className="material-symbols-outlined text-[#FF5A00] text-[18px] mt-0.5">check_circle</span>
+                          {step}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {finPlan.projection && (
+                  <div>
+                    <h4 className="text-sm font-bold text-on-surface mb-4 uppercase tracking-widest opacity-60">12-Month Projection</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {finPlan.projection.map((phase: any, idx: number) => (
+                        <div key={idx} className="bg-gradient-to-br from-surface-container-high to-surface-container border border-outline-variant/10 p-5 rounded-2xl relative overflow-hidden group hover:border-[#FF5A00]/30 transition-colors">
+                          <div className="absolute -right-4 -top-4 w-24 h-24 bg-[#FF5A00]/5 rounded-full blur-2xl group-hover:bg-[#FF5A00]/10 transition-colors"></div>
+                          <span className="text-[10px] font-label text-[#FF5A00] uppercase tracking-widest mb-1 block">{phase.status}</span>
+                          <h5 className="font-bold text-on-surface mb-4">{phase.month}</h5>
+                          <div className="flex justify-between items-center text-sm mb-1">
+                            <span className="text-on-surface/60">Revenue</span>
+                            <span className="font-bold text-emerald-400">+{formatINR(phase.revenue)}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-on-surface/60">Expenses</span>
+                            <span className="font-bold text-red-400">-{formatINR(phase.expenses)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
           </>
         )}
       </div>
